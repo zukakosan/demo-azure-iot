@@ -18,6 +18,10 @@ shutdown_event = threading.Event()
 is_running = False
 telemetry_interval_seconds = 5  # seconds
 
+# callback func for C2D message
+def handle_c2d_message(message):
+    # print the received C2D message
+    print(f"Received C2D message: {message.data.decode('utf-8')}")
 
 def handle_twin_desired_properties_patch(patch):
     print(f"Desired properties patch received: {patch}")
@@ -89,7 +93,9 @@ def main():
         device_client.on_twin_desired_properties_patch_received = (
             handle_twin_desired_properties_patch
         )
-
+        # Trigger the callback when receiving C2D messages
+        device_client.on_message_received = handle_c2d_message
+        
         telemetry_thread = threading.Thread(target=send_telemetry)
         telemetry_thread.start()
         threading.Event().wait()  # Keep the main thread alive

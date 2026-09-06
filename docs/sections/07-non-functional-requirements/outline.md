@@ -46,6 +46,70 @@ IoT Hub を本番利用する際に、セキュリティ、信頼性、性能、
 - [必須] クラウド側のアクセスには Microsoft Entra ID、Azure RBAC、マネージド ID を優先し、最小権限を適用する
 - [必須] 共有アクセスポリシーを利用する場合は用途ごとに分離し、接続文字列をソースコードやログへ残さない
 
+### 配送先への認証・権限
+
+[Section 05 のルーティング](../05-message-routing/outline.md)を例に、接続ごとの主体と権限を区別する。デバイスが IoT Hub に接続できることと、IoT Hub が Storage に書き込めることは別である。Portal を操作するユーザーと、配送に使うマネージド ID も別の主体として扱う（[IoT Hub のマネージド ID による配送先アクセス](https://learn.microsoft.com/ja-jp/azure/iot-hub/iot-hub-managed-identity#configure-message-routing-with-managed-identities)）。
+
+| 接続・操作 | 主体 | 確認する権限 |
+| --- | --- | --- |
+| デバイスから IoT Hub への送信 | デバイス ID とその資格情報 | そのデバイスとして接続・送信できるか |
+| Portal でのリソース設定 | 操作者のユーザー | リソースを設定変更できるか。ロール割り当てを行うなら、その権限もあるか |
+| IoT Hub から Storage への配送 | エンドポイントで選択したマネージド ID | 配送先コンテナーにデータを書き込めるか |
+
+マネージド ID で Storage に配送する場合は、その ID に **ストレージ BLOB データ共同作成者（Storage Blob Data Contributor）** を、配送先コンテナーを含む適切な範囲で割り当てる。通常の「共同作成者」や「ストレージ アカウント共同作成者」では代用できない。権限は IoT Hub リソース側ではなく、アクセス対象の Storage 側に対して付与する（[必要なデータアクセスロール](https://learn.microsoft.com/ja-jp/azure/iot-hub/iot-hub-managed-identity#configure-message-routing-with-managed-identities)）。
+
+接続が拒否された場合は、次を確認する。
+
+- エンドポイントで選択した ID と、ロールの付与先 ID が一致しているか。システム割り当て ID なら IoT Hub 自身の ID、ユーザー割り当て ID なら IoT Hub に関連付けた ID を確認する。
+- ロールの対象範囲が配送先コンテナーを含んでいるか。
+- ロール追加直後なら、反映まで数分待って再試行したか。
+- Storage のネットワーク制限でも拒否されていないか。RBAC とネットワークの許可は別に確認する。
+
+これらは公式のマネージド ID 設定手順とエグレス接続要件に基づく確認事項である。ネットワークを制限する構成では、信頼された Microsoft サービスの例外など、要件に合う接続許可を確認し、原因を確かめずに制限を広く解除しない（[ID・権限の設定と反映待ち](https://learn.microsoft.com/ja-jp/azure/iot-hub/iot-hub-managed-identity#configure-message-routing-with-managed-identities)、[IoT Hub から他リソースへの接続](https://learn.microsoft.com/ja-jp/azure/iot-hub/virtual-network-support#egress-connectivity-from-iot-hub-to-other-azure-resources)）。
+
+講師の実例として、エンドポイント追加時のアクセス拒否を取り上げられる。ただし、今回の解消原因は特定できていないため、「ロールの反映待ちが原因だった」とは断定しない。座学では主体・ロール・対象範囲の関係を説明し、IAM のクリック手順やエラーの相関 ID は扱わない。
+
+### 配送先へのネットワーク接続方式の選定
+
+**機能として配送先に対応していても、組織のセキュリティ要件に適合するとは限らない。** 本ワークショップでは、配送先への接続方式と例外の承認を、実装前に確認する必須事項として扱う。ID に書き込み権限を付与するだけではネットワーク制限を解除できない。IoT Hub の公式資料では、Storage・Event Hubs・Service Bus への直接配送は、配送先のパブリックエンドポイントを使用し、ネットワーク制限下では信頼された Microsoft サービスの例外とマネージド ID を組み合わせる方法が案内されている（[IoT Hub から他リソースへの送信接続](https://learn.microsoft.com/ja-jp/azure/iot-hub/virtual-network-support#egress-connectivity-from-iot-hub-to-other-azure-resources)）。
+
+#### ネットワーク例外・認証・認可を分ける
+
+| 層 | 確認すること |
+| --- | --- |
+| ネットワーク | 配送先への接続経路が許可されるか。利用する例外がサービスと組織の両方で認められているか |
+| 認証 | 接続元をどのマネージド ID として確認するか |
+| 認可 | その ID に、配送先への書き込みに必要なデータアクセス権限があるか |
+
+信頼された Microsoft サービスの例外は、「Azure 上のあらゆるアプリにデータアクセスを許可する」設定ではない。対象サービスのネットワークアクセスを許可するものであり、別途 ID に必要なデータアクセス権限を付与する。これは「すべてのネットワークからの接続を許可する」構成とも、Private Endpoint を使う構成とも区別する（[マネージド ID によるルーティングとネットワーク例外](https://learn.microsoft.com/ja-jp/azure/iot-hub/iot-hub-managed-identity#configure-message-routing-with-managed-identities)、[直接配送のネットワーク仕様](https://learn.microsoft.com/ja-jp/azure/iot-hub/virtual-network-support#egress-connectivity-from-iot-hub-to-other-azure-resources)）。
+
+**ID の種類も接続条件に含める。** 公式資料には、制限されたリソースへのアクセスはシステム割り当てマネージド ID の場合に許可され、ユーザー割り当て ID では配送先のパブリックアクセスを有効にする必要があるとの注意がある。前節の権限確認だけでなく、このネットワーク条件も確認する。システム割り当て ID を使っても、直接配送が Private Endpoint 経由になるわけではない（[送信接続における ID の制約](https://learn.microsoft.com/ja-jp/azure/iot-hub/iot-hub-managed-identity#egress-connectivity-from-iot-hub-to-other-azure-resources)、[IoT Hub の送信接続](https://learn.microsoft.com/ja-jp/azure/iot-hub/virtual-network-support#egress-connectivity-from-iot-hub-to-other-azure-resources)）。
+
+上記のネットワーク例外の説明は Storage・Event Hubs・Service Bus を対象とする。Cosmos DB など別の配送先にも同じ設定がそのまま適用できると一般化せず、配送先ごとの認証方式・ネットワーク仕様を確認する（[IoT Hub の配送先ごとの仕様](https://learn.microsoft.com/ja-jp/azure/iot-hub/iot-hub-devguide-endpoints#custom-endpoints-for-message-routing)）。
+
+#### 直接配送と受信アプリの判断
+
+次は公式の一律の推奨順位ではなく、機能要件・ネットワーク要件・運用負担を合わせた、本ワークショップでの判断ガイドである。
+
+| 条件 | 構成の候補 | 判断のポイント |
+| --- | --- | --- |
+| フィルターと配送で目的を満たし、対応するネットワーク例外を組織が承認できる | IoT Hub の直接ルーティング | 保存のためだけの独自受信アプリを追加せずに済む。ただし配送先の権限、処理能力、監視は必要 |
+| 配送先への接続が Private Endpoint 経由のみでなければならない | VNet 内の受信アプリから組み込みエンドポイントを読み、保存先へ書き込む | 接続経路だけでなく、受信・保存処理の運用も引き受ける |
+| 保存前に複雑な加工や外部データとの突き合わせが必要 | 受信・処理アプリを介する | ネットワーク要件とは別に、必要な処理機能から構成を選ぶ |
+
+プライベート接続の例は、VNet 内の受信アプリが IoT Hub の組み込み Event Hubs 互換エンドポイントへ Private Endpoint 経由で接続して読み取り、Storage の Blob 用 Private Endpoint 経由で書き込む構成である。IoT Hub の Private Endpoint は IoT Hub に接続する側の入口であり、IoT Hub の直接配送を顧客 VNet 経由にするものではない。両サービスの名前解決・経路・権限を確認する。デバイスから IoT Hub への経路も閉域化する場合は、別途 VPN や ExpressRoute などを含めて設計する（[IoT Hub の Private Link と組み込みエンドポイント](https://learn.microsoft.com/ja-jp/azure/iot-hub/virtual-network-support)、[Storage の Private Endpoint と DNS](https://learn.microsoft.com/ja-jp/azure/storage/common/storage-private-endpoints)）。
+
+受信アプリを追加する場合は、再試行、処理済み位置のチェックポイント、重複対策、監視、実行基盤の保守と費用も比較する。組み込みエンドポイントの保持期間は既定1日・最大7日であり、停止から復旧して未処理分に追い付く時間も考慮する。チェックポイントは保持期限が切れたデータを復元するものではない（[保持期間の仕様](https://learn.microsoft.com/ja-jp/azure/iot-hub/iot-hub-devguide-messages-read-builtin)、[読み取り位置とチェックポイント](https://learn.microsoft.com/ja-jp/azure/event-hubs/event-hubs-features#event-consumers)）。
+
+#### 設計初期に合意すること
+
+- [必須] 「一般公開を禁止する」のか「Private Endpoint 経由のみとする」のかを明確にし、ネットワーク管理者・セキュリティ担当者と許容する接続方式を合意する。
+- [必須] Azure Policy などの組織ポリシー、配送先の例外対応、ID の種類、データアクセス権限を確認する。接続を成立させるための全ネットワーク許可を既定の解決策にしない。
+- [必須] 採用する接続方式と、例外が必要ならその対象・承認者・見直し条件を記録する。本番移行前に、ポリシー適用下で配送・保存まで検証する。
+- [推奨] 直接配送と受信アプリを介する構成を、運用責任・監視・障害復旧・費用も含めて比較する。
+
+講師の実例は「学習環境では組織のネットワーク制約により保存確認を保留した」として扱い、接続成功や保存成功を実証したとは説明しない。個別のアクセス拒否の根本原因と、一般的なサービス仕様は分けて説明する。座学では「要件を満たせるなら直接配送を候補にし、Private Endpoint 必須や独自処理が必要なら受信アプリを検討する」とまとめる。
+
 ### ネットワークとデータ保護
 - [必須] TLS を使用し、利用する TLS バージョンと暗号スイートをデバイス互換性も含めて確認する
 - [推奨] 要件に応じて IP フィルター、Private Link、パブリックネットワークアクセスの無効化を検討する
@@ -102,6 +166,8 @@ IoT Hub を本番利用する際に、セキュリティ、信頼性、性能、
 1. 重要度は公式分類ではなく、実務上のリスクに基づく整理であると明示する
 2. 「未定義だと事故になるもの」から必須として説明する
 3. セキュリティ、信頼性、データ管理を最初に押さえる
+	- セキュリティでは、Section 05 の Storage 配送を例に、デバイス・Portal 操作者・IoT Hub のマネージド ID の権限を区別する
+	- 続けて、権限とネットワーク到達性を区別し、承認された例外による直接配送と、Private Endpoint 必須の場合の受信アプリ構成を比較する
 	- 信頼性では、Section 04 の応答タイムアウトを例に、再試行前の結果確認と重複実行対策を説明する
 4. 性能、運用、コストは初期リリース時点で方針を決めるものとして説明する
 5. 発展項目は規模拡大や本格運用で効いてくるものとして位置づける
@@ -121,6 +187,7 @@ IoT Hub を本番利用する際に、セキュリティ、信頼性、性能、
 | --- | --- |
 | 必須 | 脅威モデルとデータ分類がレビュー済みである |
 | 必須 | デバイス固有の ID、認証、資格情報更新・失効手順がある |
+| 必須 | 配送先への接続方式と必要なネットワーク例外が承認され、組織ポリシー適用下で認証・認可・配送・保存を検証している |
 | 必須 | SLO、RTO、RPO と責任分界が合意されている |
 | 必須 | デバイス廃棄まで含むライフサイクル責任者が決まっている |
 | 推奨 | 容量見積もりとピーク・再接続負荷試験が完了している |
@@ -137,20 +204,32 @@ IoT Hub を本番利用する際に、セキュリティ、信頼性、性能、
 - 「高可用」「安全」ではなく、SLO、RTO、RPO、責任者、対応手順まで落とす
 - IoT Hub の SLA をそのままシステム全体の SLO にしない
 - デバイス、ネットワーク、IoT Hub、ルーティング先、可視化までをエンドツーエンドで考える
+- 配送先への認証・認可とネットワーク到達性を分け、接続方式を組織ポリシーと運用負担から決める
 - 応答がないことを未実行と決めつけず、再試行と重複実行をセットで設計する
 
 ## よくある誤解
 - Microsoft Learn に項目ごとの必須・推奨が明示されている
 - IoT Hub が高可用ならシステム全体も高可用である
 - コスト最適化は本番稼働後に考えればよい
+- Portal 操作者が Storage にアクセスできれば、IoT Hub からも書き込める
+- 通常の「共同作成者」を付与すれば、Blob のデータ書き込み権限も満たせる
+- マネージド ID に権限を付与すれば、配送先のネットワーク制限も通過できる
+- IoT Hub に Private Endpoint を作れば、Storage への直接配送も Private Endpoint 経由になる
+- 信頼されたサービスの例外は、すべての Azure アプリにデータアクセスを許可する設定である
 
 ## 理解度確認
 - 重要度は公式分類か、実務上の判断ガイドか
 - 本番前に必ず決めるべきセキュリティ項目は何か
+- マネージド ID で IoT Hub から Storage に配送する場合、誰に、どのロールを、どの範囲で付与するか
+- 信頼されたサービスの例外、マネージド ID による認証、データアクセス権限は、それぞれ何を許可・確認するか
+- 配送先への Private Endpoint 接続が必須の場合、どの構成を候補にし、どの運用負担が増えるか
 - IoT Hub の SLA とシステム全体の SLO はなぜ同じではないのか
 - 「開始状態にする」と「開始・停止を反転する」では、再試行時のリスクがどう違うか
 
 ## 参考リンク
+- [IoT Hub のマネージド ID と配送先へのアクセス](https://learn.microsoft.com/ja-jp/azure/iot-hub/iot-hub-managed-identity)
+- [IoT Hub の Private Link と送信接続](https://learn.microsoft.com/ja-jp/azure/iot-hub/virtual-network-support)
+- [Azure Storage の Private Endpoint](https://learn.microsoft.com/ja-jp/azure/storage/common/storage-private-endpoints)
 - [Azure Well-Architected Framework とは](https://learn.microsoft.com/ja-jp/azure/well-architected/what-is-well-architected-framework)
 - [Azure IoT Hub のデプロイをセキュリティで保護する](https://learn.microsoft.com/ja-jp/azure/iot-hub/secure-azure-iot-hub)
 - [IoT ソリューションをセキュリティで保護する](https://learn.microsoft.com/ja-jp/azure/iot/iot-overview-security)

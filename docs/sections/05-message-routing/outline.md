@@ -6,9 +6,13 @@ IoT Hub が受け取った D2C メッセージを、条件に応じて後続サ�
 ## 聞き手に持ち帰ってほしいこと
 - IoT Hub は取り込み口であり、保存・分析・可視化は後続サービスと組み合わせる
 - メッセージルーティングでは、本文、プロパティ、Device Twin の情報を条件にできる
+- ルートは配送ルール、エンドポイントは配送先の設定。受信ツールでの表示と保存先への配送は別の確認である
+- 配送先は、アプリでの受信・履歴保存・検索・ストリーム分析・業務処理という目的で選ぶ
+- 組み込みエンドポイントの保持期間には限りがあり、IoT Hub への送信成功は長期保存の完了を意味しない
 - ルーティング先の障害や遅延も監視対象である
 
 ## 扱う内容
+### ルーティングの役割と配送先
 - D2C テレメトリやイベントを、条件に応じて後続サービスへ配送する
 - 条件にはメッセージ本文、メッセージプロパティ、Device Twin の情報を利用できる
 - 主な配送先
@@ -18,39 +22,188 @@ IoT Hub が受け取った D2C メッセージを、条件に応じて後続サ�
     - Azure Cosmos DB
     - Microsoft Fabric Eventstreams（プレビュー）
 
-フォールバックルートは、どのルート条件にも一致しないメッセージを組み込みエンドポイントへ送る。配送先の障害は、メトリック、リソースログ、エンドポイントの正常性を使って別途監視する。
+デバイスは引き続き IoT Hub に送信し、IoT Hub 側で後続サービスへの配送を設定する。一つのメッセージは、条件に一致する複数の配送先へ送れる。例えば「全データを Storage に保存し、温度28度以上のデータは Service Bus にも送る」という構成にできる。ルーティングは必ずしも排他的な振り分けではない（[ルーティングの概要と配送先](https://learn.microsoft.com/ja-jp/azure/iot-hub/iot-hub-devguide-messages-d2c#routing-endpoints)）。
+
+### データソース・ルート・エンドポイント
+
+| 用語 | 決めること | 今回の例 |
+| --- | --- | --- |
+| データソース | 何を配送対象にするか | デバイスのテレメトリ |
+| エンドポイント | どこへ送るか | Blob Storage のコンテナーを指す設定 |
+| ルート | 対象・条件・配送先を結び付けるルール | 温度28度以上のテレメトリを保存先へ送る |
+
+これらは IoT Hub の Portal メニュー「メッセージ ルーティング」で設定する。Storage へ送る場合は、配送先のストレージアカウントとコンテナーを用意し、それを指すカスタムエンドポイントを登録する。エンドポイント登録はルート作成中にも行える（[Portal でのルートとエンドポイントの作成](https://learn.microsoft.com/ja-jp/azure/iot-hub/how-to-routing-portal?tabs=storage)）。
+
+**エンドポイント名とストレージアカウント名は別で、同じ名前にする必要はない。** 例えば、エンドポイント名 `telemetry-storage` が、ストレージアカウント `stiotdemo001` 内のコンテナー `telemetry` を参照する。ルートでは、この登録済みエンドポイントを配送先として使う（[ストレージエンドポイントの設定項目](https://learn.microsoft.com/ja-jp/azure/iot-hub/how-to-routing-portal?tabs=storage#create-a-route-and-endpoint)）。
+
+配送先を登録するだけでなく、IoT Hub がその配送先へ書き込むための認証・権限も必要である。デバイスの接続認証や Portal 操作者の権限とは別に考える。詳細は [Section 07 の配送先への認証・権限](../07-non-functional-requirements/outline.md#配送先への認証権限)で扱う。
+
+**配送先は用途だけでなく、組織のネットワーク要件によっても選択が制約される。** 書き込み権限があっても、ネットワーク側で拒否されれば配送できない。直接ルーティングと Private Endpoint を使う受信アプリ構成の選び方は、[Section 07 の配送先へのネットワーク接続方式の選定](../07-non-functional-requirements/outline.md#配送先へのネットワーク接続方式の選定)で扱う（[IoT Hub の送信接続要件](https://learn.microsoft.com/ja-jp/azure/iot-hub/virtual-network-support#egress-connectivity-from-iot-hub-to-other-azure-resources)）。
+
+#### データソースと操作の対応
+
+「デバイス テレメトリ メッセージ」を選ぶと、対象は D2C メッセージになる。今回の Python デモでは `send_message()` で送る温度・湿度が該当し、同じ API で送るアラートなども対象になる。Twin の変更通知、C2D、Direct Method の応答はこのデータソースには含まれない（[Python SDK の send_message](https://learn.microsoft.com/ja-jp/python/api/azure-iot-device/azure.iot.device.iothubdeviceclient#azure-iot-device-iothubdeviceclient-send-message)、[ルーティングのデータソース](https://learn.microsoft.com/ja-jp/azure/iot-hub/iot-hub-devguide-messages-d2c)）。
+
+| 操作の例 | 対応するデータソース |
+| --- | --- |
+| デバイスが `send_message()` で送信する | デバイス テレメトリ メッセージ |
+| デバイスが `patch_twin_reported_properties()` で Reported を更新する | デバイス ツイン変更イベント |
+| クラウド側で Desired を更新する | デバイス ツイン変更イベント |
+| デバイス／モジュール ID を登録・削除する | デバイス ライフサイクル イベント |
+
+分類は関数名そのものではなく、「何を送ったか・何が変化したか」で決まる。クラウド側の操作でもイベントは発生する。Twin の変更を後続サービスへ通知するには、Twin 変更イベントをデータソースにしたルートが必要である（[非テレメトリイベント](https://learn.microsoft.com/ja-jp/azure/iot-hub/iot-hub-devguide-messages-d2c#non-telemetry-events)、[Twin の変更通知](https://learn.microsoft.com/ja-jp/azure/iot-hub/iot-hub-devguide-device-twins#back-end-operations)）。
+
+座学では上の対応を押さえ、その他のデータソースは紹介に留める。今回のデモではテレメトリを選択する。
+
+### エンドポイントの使い分け
+
+#### 組み込みエンドポイントはアプリ側の読み取り口
+
+組み込みエンドポイント `messages/events` は、IoT Hub が受け取った D2C メッセージをバックエンドアプリが読み取るために、最初から用意されている。IoT Explorer のテレメトリ表示も、このエンドポイントから読み取っている。自作の受信アプリを使う場合は、IoT Explorer の読み取り役を自分のアプリが担うと考えるとよい（[組み込みエンドポイントからの受信](https://learn.microsoft.com/ja-jp/azure/iot-hub/iot-hub-devguide-messages-read-builtin)、[IoT Explorer での受信確認](https://learn.microsoft.com/ja-jp/azure/iot-hub/tutorial-routing#configure-iot-explorer-to-view-messages)）。
+
+自作アプリは SDK で接続し、メッセージを継続的に受信して処理する。定期的な HTTP GET で DB を検索する仕組みではなく、AMQP または AMQP over WebSockets を使う。「Event Hubs 互換」は Event Hubs 用の SDK などで読み取れるという意味であり、別の Event Hubs リソースを作る必要はない。Python では `azure-eventhub` を利用できる（[接続プロトコルと対応 SDK](https://learn.microsoft.com/ja-jp/azure/iot-hub/iot-hub-devguide-messages-read-builtin)）。
+
+#### 目的から配送先を選ぶ
+
+次の表は、温度・湿度テレメトリを題材にした講義上の選定目安である。組み込み・Storage・Cosmos DB の配送仕様と、Event Hubs・Service Bus の用途を基に整理している（[IoT Hub の配送先](https://learn.microsoft.com/ja-jp/azure/iot-hub/iot-hub-devguide-endpoints#custom-endpoints-for-message-routing)、[メッセージングサービスの比較](https://learn.microsoft.com/ja-jp/azure/service-bus-messaging/compare-messaging-services)）。
+
+| 配送先 | 主な目的 | 温度・湿度データでの利用例 |
+| --- | --- | --- |
+| 組み込みエンドポイント | アプリがメッセージを読み取る | IoT Explorer での受信確認、自作アプリでの温度判定 |
+| Blob Storage / ADLS Gen2 | ファイルとして履歴を保存し、後から分析する | 全測定データを残して後日まとめて集計する |
+| Cosmos DB | DB に保存し、アプリから条件を指定して取り出す | 特定デバイスの測定履歴を画面に表示する |
+| Event Hubs | 大量の連続データを後続のストリーム処理へ渡す | 多数のデバイスの温度を継続的に集計・分析する |
+| Service Bus | 業務処理へメッセージを渡す | 高温の通知を受け、後続アプリで保守チケットを作成する |
+
+**Storage と Cosmos DB は「ファイルとして残すか、DB として取り出すか」、Event Hubs と Service Bus は「連続する観測データを処理するか、業務メッセージを処理するか」**を入口に比較する。配送するだけで集計やチケット作成まで完了するわけではなく、後続の処理も設計する（[配送先の仕様](https://learn.microsoft.com/ja-jp/azure/iot-hub/iot-hub-devguide-endpoints#custom-endpoints-for-message-routing)、[サービスの用途比較](https://learn.microsoft.com/ja-jp/azure/service-bus-messaging/compare-messaging-services)）。
+
+配送先は一つに絞る必要はない。例えば「全データを Cosmos DB に保存し、温度28度以上は Service Bus にも送る」とすれば、履歴の参照と業務処理を両立できる。同じメッセージは、条件に一致する複数のエンドポイントへ配送される（[複数の配送先へのルーティング](https://learn.microsoft.com/ja-jp/azure/iot-hub/iot-hub-devguide-messages-d2c#routing-endpoints)）。
+
+#### 組み込みエンドポイントの保持期間と長期保存
+
+組み込みエンドポイントの保持期間は **既定で1日、最大7日**であり、長期保存用の DB ではない。保持期限を過ぎて失効したメッセージは読み取れなくなる。**受信アプリが未読でも、読み終わるまで無期限に保持されるわけではない。** 「IoT Hub に送信できた」と「履歴を長期保存できた」は区別する（[保持期間の仕様](https://learn.microsoft.com/ja-jp/azure/iot-hub/iot-hub-devguide-messages-read-builtin)）。
+
+受信アプリが停止した場合に備え、処理済み位置をチェックポイントとして保存し、再起動時に残っている未処理データから再開できるようにする。チェックポイントは再開位置の記録であり、データの保持期間を延ばすものではない。停止時間だけでなく、復旧後に未処理分へ追い付く時間も考慮する（[読み取り位置とチェックポイント](https://learn.microsoft.com/ja-jp/azure/event-hubs/event-hubs-features#event-consumers)、[IoT Hub の保持期間](https://learn.microsoft.com/ja-jp/azure/iot-hub/iot-hub-devguide-messages-read-builtin)）。
+
+長期保存が必要なデータは、受信アプリで保存するか、ルーティングで Cosmos DB・Storage などへ配送する。後者では、独自の受信アプリを介さずに保存先へ直接配送できる（[保存先への直接配送](https://learn.microsoft.com/ja-jp/azure/iot-hub/iot-hub-devguide-endpoints#custom-endpoints-for-message-routing)）。
+
+座学では比較表を中心に約3分で説明し、保持期限を一言添える。Service Bus のキュー／トピック、コンシューマーグループ、チェックポイントの実装は補足に回す。Fabric Eventstreams は前述の配送先一覧での紹介に留める。
+
+### 本文を使う条件の例
+
+今回の温度・湿度 JSON に対して、ルートの条件を `$body.temperature >= 28` とすれば、温度28度以上を対象にできる。これはデバイス側の Python の分岐ではなく、IoT Hub が評価する条件式である。本文の評価には、有効な JSON と、システムプロパティ `contentType = application/json`、`contentEncoding = utf-8` などの適切な指定が必要になる（[メッセージ本文に基づくクエリ](https://learn.microsoft.com/ja-jp/azure/iot-hub/iot-hub-devguide-routing-query-syntax#query-based-on-message-body)）。
+
+ルーティングクエリは各メッセージについて評価され、結果が `true` になったメッセージがそのルートの配送対象になる。既定の `true` は「常に成立する条件式」であり、本文の特定の項目を調べるものではない。そのままなら、選択したデータソースの全メッセージが対象になる（[クエリの評価規則](https://learn.microsoft.com/ja-jp/azure/iot-hub/iot-hub-devguide-routing-query-syntax)）。
+
+| メッセージ本文 | 条件 `true` | 条件 `$body.temperature >= 28` |
+| --- | --- | --- |
+| `{"temperature":25,"humidity":45}` | 対象 | 対象外 |
+| `{"temperature":29,"humidity":45}` | 対象 | 対象 |
+
+`$body.temperature` は JSON 本文の温度を参照するが、条件に一致した場合に配送するのは、湿度も含むメッセージ全体である。SQL に例えると、列を抽出する `SELECT` ではなく、対象を絞る `WHERE` の役割に相当する。評価単位は D2C メッセージ1件であり、Storage にまとめて保存された後のファイル単位ではない（[本文に対するフィルター](https://learn.microsoft.com/ja-jp/azure/iot-hub/iot-hub-devguide-routing-query-syntax#query-based-on-message-body)、[メッセージの配送](https://learn.microsoft.com/ja-jp/azure/iot-hub/iot-hub-devguide-messages-d2c#routing-queries)）。
+
+### 受信ツール・フォールバック・保存先の違い
+
+IoT Explorer でのテレメトリ表示は、IoT Hub の組み込みエンドポイントを読み取る操作である。Storage へのルーティングは、IoT Hub から保存先へ配送する設定であり、「受信ツールで見えた」ことは「Storage に保存された」ことの確認にはならない（[ルーティング前後の受信と保存の確認](https://learn.microsoft.com/ja-jp/azure/iot-hub/tutorial-routing)）。
+
+カスタムルートを追加すると、それに一致したメッセージが IoT Explorer に表示されなくなる場合がある。組み込みエンドポイントにも全件流したい場合は、そこを配送先にして条件 `true` のルートを明示する。有効なフォールバックルートは、どのルート条件にも一致しないメッセージを組み込みエンドポイントへ送るものであり、配送先障害時の代替保存先ではない（[フォールバックルート](https://learn.microsoft.com/ja-jp/azure/iot-hub/iot-hub-devguide-messages-d2c#fallback-route)）。
+
+配送先の障害は、メトリック、リソースログ、エンドポイントの正常性を使って別途監視する（[ルーティングの監視とトラブルシューティング](https://learn.microsoft.com/ja-jp/azure/iot-hub/iot-hub-devguide-messages-d2c#monitoring-and-troubleshooting)）。
+
+### Storage への保存: タイミングと形式
+
+#### バッチ頻度とチャンクサイズ
+
+IoT Hub は、Storage へメッセージを一件ずつ即時保存するのではなく、まとめて書き込む。**バッチ頻度の時間が経過するか、チャンクサイズに達するか、どちらか先に条件を満たすと書き出す。** デバイスのテレメトリ送信間隔とは別の設定である（[Storage への一括書き込み](https://learn.microsoft.com/ja-jp/azure/iot-hub/iot-hub-devguide-endpoints#azure-storage-as-a-routing-endpoint)）。
+
+| 設定 | 意味 | 選ぶときの観点 |
+| --- | --- | --- |
+| バッチ頻度 | たまったデータを書き出す時間間隔 | 早く保存結果を使いたいか、ある程度まとめてよいか |
+| チャンクサイズ | 書き出しの基準となるデータ量 | 後続処理で扱うファイルの大きさと、到着するデータ量 |
+
+講義では「少量しか届かなくても、サイズがたまるまで無期限に待つわけではない」と説明する。短い間隔・小さいサイズは小さなファイルを増やしやすいため、本番では保存の遅延許容度と後続処理の扱いやすさを見て調整する。
+
+デモ用の推奨例は **60秒・10 MB**。少量の温度・湿度データでは主に時間条件で書き出されるため、送信直後に Blob が見えなくても、まずバッチ分の待ち時間を見込む。これは保存完了までの厳密な時間保証ではない。設定範囲は60〜720秒、10〜500 MBである（[ストレージエンドポイントの設定仕様](https://learn.microsoft.com/ja-jp/azure/templates/microsoft.devices/2019-11-04/iothubs#routingstoragecontainerproperties)）。
+
+#### Avro と JSON
+
+ここで選ぶのは、デバイスの送信形式ではなく **Blob Storage への保存形式** である。デバイスが JSON を送信していても、IoT Hub 側で Avro 形式の保存を選べる（[Storage でサポートされる保存形式](https://learn.microsoft.com/ja-jp/azure/iot-hub/iot-hub-devguide-endpoints#azure-storage-as-a-routing-endpoint)）。
+
+| 保存形式 | 特徴 | 講義での選定目安 |
+| --- | --- | --- |
+| JSON | テキストとして内容を確認しやすい | デモで温度・湿度を目で確認する場合に選ぶ |
+| Avro | スキーマに基づくコンパクトなバイナリ形式。読み取りには対応ツールやライブラリを使う | Avro に対応した後続のデータ処理基盤と連携する場合に検討する |
+
+Avro の特徴は公式の形式解説を参照する。「本番なら必ず Avro」ではなく、後続システムが扱いやすい形式を選ぶ（[Avro の特徴と読み書き](https://learn.microsoft.com/ja-jp/azure/databricks/query/formats/avro)）。
+
+デモでは **JSON** を推奨する。本文を読みやすく保存するため、送信メッセージに `contentType = application/json` と `contentEncoding = utf-8` を指定する。未指定の場合は本文が Base64 エンコードされる。また、**既存エンドポイントの保存形式は後から変更できない**。形式を変える場合は新しいエンドポイントを作り、ルートの参照先を切り替える（[保存形式とエンコードの制約](https://learn.microsoft.com/ja-jp/azure/iot-hub/iot-hub-devguide-endpoints#azure-storage-as-a-routing-endpoint)）。
 
 ## 話す流れ
 1. 温度テレメトリを受け取ったあと、すべて同じ処理に流すとは限らないことを説明する
-2. 例として、通常データは Storage、アラートは Service Bus、リアルタイム分析は Event Hubs / Fabric へ流す構成を説明する
-3. フォールバックルートと監視の必要性を説明する
+2. ルート・条件・エンドポイントの関係と、`send_message()` がテレメトリのデータソースに対応することを説明する
+3. IoT Explorer の読み取り元である組み込みエンドポイントを起点に、配送先の使い分けを比較表で説明する。保持期間は既定1日・最大7日であり、長期保存先は別に必要と伝える
+4. 全データを保存し、温度28度以上は Service Bus にも送る例で、複数配送と `true`・温度条件の違いを確認する
+5. IoT Explorer の受信と保存先への配送を区別し、フォールバックの対象を説明する
+6. Storage のまとめ書きと保存形式を説明する。細かな設定範囲は補足とし、Storage を使うデモでは60秒・10 MB・JSONで確認する
+7. 配送先の障害や遅延を監視する必要性を説明する
 
 ## スライド構成案
 | Slide | タイトル | 目的 | レイアウト / ビジュアル | 主なメッセージ |
 | --- | --- | --- | --- | --- |
 | 1 | IoT Hub の後ろに何をつなぐか | ルーティングの必要性を説明する | IoT Hub から複数サービスへ分岐する図 | IoT Hub は取り込み口であり、用途に応じて後続サービスへ流す |
-| 2 | ルーティング条件 | 条件分岐の考え方を示す | メッセージ本文、プロパティ、Device Twin を入力にしたフィルター図 | 条件には本文、プロパティ、Twin 情報を使える |
-| 3 | 代表的な配送先 | 保存・分析・業務連携の選択肢を整理する | Storage、Event Hubs、Service Bus、Cosmos DB、Fabric のカード | 配送先は目的に応じて選ぶ |
-| 4 | フォールバックと監視 | 本番設計上の注意点を示す | 正常ルートとフォールバックルート、監視アイコン | ルーティング先の障害や遅延も監視対象である |
+| 2 | ルートとエンドポイント | 対象・条件・配送先の関係を示す | 温度28度以上の条件と、Storage の配送先設定を結ぶ図 | デバイスは IoT Hub へ送り、配送条件は IoT Hub 側で設定する |
+| 3 | 目的から配送先を選ぶ | アプリでの受信・保存・分析・業務連携を区別する | 組み込み、Storage、Cosmos DB、Event Hubs、Service Bus の用途比較表。組み込みの保持期限を注記 | 組み込みは読み取り口、長期保存は別の配送先。目的に応じて複数配送できる |
+| 4 | Storage にいつ、どう保存されるか | バッチ書き込みと保存形式を理解する | メッセージがたまり、時間またはサイズで Blob に書き出される図 | 送信直後の保存ではない。デモは JSON で内容を確認する |
+| 5 | フォールバックと監視 | 受信ツールと保存先の違い、本番設計上の注意点を示す | 組み込みエンドポイントと Storage、フォールバックの対象を対比 | 条件不一致と配送先障害は別。配送先の遅延や障害も監視する |
 
 ## 図・デモで見せるもの
 - IoT Hub から複数の後続サービスへルーティングする図
-- 通常温度データとしきい値超過アラートを分岐する例
+- 全データを保存し、しきい値以上のデータを別の配送先にも送る構成例
+- デモは保存先を一つに絞り、28度以上と未満のメッセージで配送結果を比較する
+- IoT Explorer の表示と、バッチ書き込み後の Blob の内容を別々に確認する
 
 ## 強調するポイント
 - IoT Hub と後続サービスの責任範囲を分ける
+- 配送先はサービス名からではなく、データの利用目的から選ぶ
+- 組み込みエンドポイントは期限付きの読み取り口であり、未読データの無期限保持や長期保存を担わない
+- エンドポイントは配送先設定であり、ストレージアカウントそのものではない
+- 受信確認・配送・保存・後続処理の完了を区別する
 - ルーティング条件はデータ設計と運用設計に影響する
 - ルーティング先の処理能力や障害時の挙動も本番設計に含める
 
 ## よくある誤解
 - IoT Hub のルーティングを設定すれば後続処理は監視しなくてよい
 - すべてのデータを同じ保存先に送れば十分である
+- 組み込みエンドポイントを読むには、別途 Event Hubs リソースを作る必要がある
+- 受信アプリが未読のメッセージは、組み込みエンドポイントに無期限で保持される
+- チェックポイントを保存すれば、保持期限が切れたデータも復元できる
 - フォールバックルートがあればデータ損失は考えなくてよい
+- 一つのメッセージは一つの配送先にしか送れない
+- カスタムルートを追加しても、受信ツールには必ず全件表示される
+- デバイスから送るものなら、Reported の更新もテレメトリのデータソースに含まれる
+- `$body.temperature` で条件を指定すれば、温度の項目だけが配送される
+- チャンクサイズまでデータがたまらないと、いつまでも保存されない
+- デバイスが JSON を送れば、Storage への保存形式も自動的に JSON になる
 
 ## 理解度確認
 - 受信したテレメトリを長期保存する場合、IoT Hub だけで完結するか
+- IoT Explorer や自作の受信アプリは、IoT Hub のどこからテレメトリを読み取るか
+- ファイルでの履歴保存、DB からの履歴参照、連続データの分析、保守チケット作成では、それぞれどの配送先を候補にするか
+- 組み込みエンドポイントの保持期間を超えて受信アプリが停止した場合、未読データを必ず取り戻せるか
 - しきい値を超えたデータだけ別の処理へ流す場合、何を使うか
+- エンドポイント名とストレージアカウント名は、それぞれ何を識別するか
+- `send_message()` と Reported の更新を配送したい場合、データソースは同じか
+- 条件 `true` と `$body.temperature >= 28` はどう違うか。条件に一致したとき、湿度の項目も配送されるか
+- Storage 向けルートを追加して IoT Explorer に表示されなくなったら、何を確認するか
+- 60秒・10 MB の設定で少量のデータを送った場合、何が書き込みのきっかけになるか
 - ルーティング先の障害はどこで監視するべきか
 
 ## 参考リンク
 - [IoT Hub メッセージ ルーティング](https://learn.microsoft.com/ja-jp/azure/iot-hub/iot-hub-devguide-messages-d2c)
+- [IoT Hub のエンドポイント](https://learn.microsoft.com/ja-jp/azure/iot-hub/iot-hub-devguide-endpoints)
+- [組み込みエンドポイントからの受信と保持期間](https://learn.microsoft.com/ja-jp/azure/iot-hub/iot-hub-devguide-messages-read-builtin)
+- [Azure メッセージングサービスの比較](https://learn.microsoft.com/ja-jp/azure/service-bus-messaging/compare-messaging-services)
+- [Event Hubs の読み取り位置とチェックポイント](https://learn.microsoft.com/ja-jp/azure/event-hubs/event-hubs-features#event-consumers)
+- [ルーティングクエリの構文](https://learn.microsoft.com/ja-jp/azure/iot-hub/iot-hub-devguide-routing-query-syntax)
+- [Portal でルートとエンドポイントを管理する](https://learn.microsoft.com/ja-jp/azure/iot-hub/how-to-routing-portal?tabs=storage)
+- [チュートリアル: デバイスデータを Azure Storage に送信する](https://learn.microsoft.com/ja-jp/azure/iot-hub/tutorial-routing)
