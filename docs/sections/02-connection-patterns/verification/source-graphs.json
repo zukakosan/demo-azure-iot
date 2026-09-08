@@ -1,0 +1,204 @@
+[
+  {
+    "id": "02-01",
+    "graph": {
+      "edges": [
+        {
+          "to": "cloud",
+          "label": "直接接続でき、クラウド側で処理",
+          "from": "requirements"
+        },
+        {
+          "to": "edge",
+          "label": "現場で接続・処理する必要",
+          "from": "requirements"
+        }
+      ],
+      "nodes": {
+        "requirements": {
+          "parent": null,
+          "id": "requirements",
+          "label": "通信・ネットワーク・処理場所の要件"
+        },
+        "cloud": {
+          "parent": null,
+          "id": "cloud",
+          "label": "クラウド直接接続\rAzure IoT Hub"
+        },
+        "edge": {
+          "parent": null,
+          "id": "edge",
+          "label": "エッジ経由接続\rAzure IoT Operations"
+        }
+      },
+      "groups": {}
+    }
+  },
+  {
+    "id": "02-02",
+    "graph": {
+      "edges": [
+        {
+          "to": "hub",
+          "label": "温度データ\rMQTT / AMQP / HTTPS",
+          "from": "sensor"
+        },
+        {
+          "to": "downstream",
+          "label": "データを配送",
+          "from": "hub"
+        }
+      ],
+      "nodes": {
+        "sensor": {
+          "parent": "deviceSide",
+          "id": "sensor",
+          "label": "温度センサー\rデバイスアプリ"
+        },
+        "hub": {
+          "parent": "azureSide",
+          "id": "hub",
+          "label": "Azure IoT Hub"
+        },
+        "downstream": {
+          "parent": "azureSide",
+          "id": "downstream",
+          "label": "後続サービス\r蓄積・分析・可視化"
+        }
+      },
+      "groups": {
+        "deviceSide": {
+          "parent": null,
+          "id": "deviceSide",
+          "label": "デバイス側"
+        },
+        "azureSide": {
+          "parent": null,
+          "id": "azureSide",
+          "label": "Azure"
+        }
+      }
+    }
+  },
+  {
+    "id": "02-03",
+    "graph": {
+      "edges": [
+        {
+          "to": "connector",
+          "label": "OPC UA",
+          "from": "equipment"
+        },
+        {
+          "to": "broker",
+          "label": "",
+          "from": "connector"
+        },
+        {
+          "to": "dataflow",
+          "label": "",
+          "from": "broker"
+        },
+        {
+          "to": "cloud",
+          "label": "加工したデータ",
+          "from": "dataflow"
+        }
+      ],
+      "nodes": {
+        "equipment": {
+          "parent": "site",
+          "id": "equipment",
+          "label": "温度データを持つ設備\rOPC UA サーバー"
+        },
+        "connector": {
+          "parent": "runtime",
+          "id": "connector",
+          "label": "OPC UA 用コネクタ"
+        },
+        "broker": {
+          "parent": "runtime",
+          "id": "broker",
+          "label": "MQTT ブローカー\rデータの受け渡し"
+        },
+        "dataflow": {
+          "parent": "runtime",
+          "id": "dataflow",
+          "label": "データフロー\r加工・配送"
+        },
+        "cloud": {
+          "parent": null,
+          "id": "cloud",
+          "label": "クラウドの後続サービス\r例: Microsoft Fabric"
+        }
+      },
+      "groups": {
+        "site": {
+          "parent": null,
+          "id": "site",
+          "label": "工場・現場"
+        },
+        "runtime": {
+          "parent": "site",
+          "id": "runtime",
+          "label": "Azure IoT Operations / Azure Arc 対応 Kubernetes"
+        }
+      }
+    }
+  },
+  {
+    "id": "02-04",
+    "graph": {
+      "edges": [
+        {
+          "to": "hub",
+          "label": "",
+          "from": "direct"
+        },
+        {
+          "to": "operations",
+          "label": "",
+          "from": "equipment"
+        },
+        {
+          "to": "downstream",
+          "label": "",
+          "from": "hub"
+        },
+        {
+          "to": "downstream",
+          "label": "",
+          "from": "operations"
+        }
+      ],
+      "nodes": {
+        "direct": {
+          "parent": null,
+          "id": "direct",
+          "label": "拠点A: 温度センサー\rクラウドへ直接接続可能"
+        },
+        "hub": {
+          "parent": null,
+          "id": "hub",
+          "label": "Azure IoT Hub\r今回の対象"
+        },
+        "equipment": {
+          "parent": null,
+          "id": "equipment",
+          "label": "拠点B: 工場設備\rOPC UA で現場接続"
+        },
+        "operations": {
+          "parent": null,
+          "id": "operations",
+          "label": "Azure IoT Operations\r構成紹介のみ"
+        },
+        "downstream": {
+          "parent": null,
+          "id": "downstream",
+          "label": "後続の蓄積・分析・可視化\r経路ごとの連携設定は省略"
+        }
+      },
+      "groups": {}
+    }
+  }
+]

@@ -7,6 +7,7 @@ IoT Hub を本番利用する際に、セキュリティ、信頼性、性能、
 - 非機能要件は抽象語ではなく、測定可能な目標、判断基準、責任者まで定義する
 - 重要度は Microsoft Learn の公式分類ではなく、実務上のリスクに基づく判断ガイドとして扱う
 - 本番移行前に未定義だと事故・障害・復旧不能に直結しやすい項目から優先する
+- 多数台の運用では、DPS による初回登録・割り当てと、登録後の設定・更新・監視・廃棄を分けて設計する
 
 ## 重要度の考え方
 非機能要件は「高可用」「安全」といった抽象語ではなく、測定可能な目標、障害時の判断基準、責任者まで定義する。Azure Well-Architected Framework の 5 つの柱を使うと、セキュリティだけに偏らず設計できる。
@@ -45,6 +46,67 @@ IoT Hub を本番利用する際に、セキュリティ、信頼性、性能、
 - [必須] 製造、物流、設置、保守、廃棄の各工程で、誰が資格情報を扱うかを明確にする
 - [必須] クラウド側のアクセスには Microsoft Entra ID、Azure RBAC、マネージド ID を優先し、最小権限を適用する
 - [必須] 共有アクセスポリシーを利用する場合は用途ごとに分離し、接続文字列をソースコードやログへ残さない
+
+### 多数台の登録とライフサイクル管理
+
+デモで体験した手動登録を出発点に、「台数が増えたとき、誰が初期アプリや資格情報を準備し、登録・交換・廃棄を管理するか」を問いかける。初回登録の自動化を、デバイスの運用全体の一部として説明する。
+
+#### DPS による初回登録と接続先の割り当て
+
+手動で IoT Hub にデバイスを登録する代わりに、DPS（Device Provisioning Service）で登録と接続先の割り当てを自動化できます。デバイスからの要求を確認した DPS が IoT Hub にデバイスを登録し、割り当て結果を返します。その後、デバイスは IoT Hub に直接接続します（[DPS の動作](https://learn.microsoft.com/ja-jp/azure/iot-dps/about-iot-dps#how-device-provisioning-service-works)）。
+
+事前に、デバイスへ初期アプリ・資格情報・DPS の接続情報を用意し、クラウド側で DPS の Enrollment と IoT Hub とのリンクを設定します。**Enrollment は登録を許可するための事前設定であり、IoT Hub のデバイス登録とは別です**（[DPS の事前準備](https://learn.microsoft.com/ja-jp/azure/iot-dps/about-iot-dps#how-device-provisioning-service-works)、[Enrollment の意味](https://learn.microsoft.com/ja-jp/azure/iot-dps/concepts-service#enrollment)）。
+
+次の図は初回登録が成功する場合の概念的な流れです。認証方式ごとのやり取りや登録結果のポーリングは省略しています（[DPS の登録フロー](https://learn.microsoft.com/ja-jp/azure/iot-dps/about-iot-dps#how-device-provisioning-service-works)）。
+
+```mermaid
+sequenceDiagram
+	participant Device as デバイス
+	participant DPS as DPS
+	participant Hub as IoT Hub
+
+	Note over Device,Hub: 事前準備済み：デバイスの資格情報・DPS の Enrollment・Hub とのリンク
+	Note over Device,Hub: 初回登録・割り当て
+	Device->>DPS: 登録要求・認証情報の提示
+	DPS->>DPS: Enrollment と照合して本人確認<br/>割り当て先の Hub を決定
+	DPS->>Hub: デバイスを登録
+	Hub-->>DPS: デバイス ID・登録情報
+	DPS-->>Device: 割り当て結果（Hub のホスト名・Device ID など）
+
+	Note over Device,Hub: 通常通信：DPS は経由しない
+	Device->>Hub: 割り当て結果と資格情報で直接接続
+	Hub-->>Device: 接続成功
+	Device->>Hub: D2C テレメトリを送信
+```
+
+座学ではこの図を使い、「誰が Hub に登録するか」「登録後は誰と通信するか」を説明します。DPS の作成操作や認証方式の詳細は扱わず、Private Endpoint などの通信経路の話は本章のネットワーク要件と分けて考えます。この図は閉域接続の構成を表すものではありません。
+
+#### 直接登録・DPS の個別登録・グループ登録の使い分け
+
+「DPS でも 1 台ずつ個別登録するなら、IoT Hub に直接登録するのと何が違うか」を問いかける。**個別登録では Enrollment の件数は減らないが、デバイスの本人確認と接続先 IoT Hub の決定を分離できる**。デバイスには資格情報と DPS の接続情報を事前設定し、接続先の Hub はプロビジョニング時に割り当てる（[Enrollment の種類](https://learn.microsoft.com/ja-jp/azure/iot-dps/concepts-service#enrollment)、[DPS の動作と利用シナリオ](https://learn.microsoft.com/ja-jp/azure/iot-dps/about-iot-dps)）。
+
+次の表は、公式の登録方式と DPS の利用シナリオを踏まえた、本ワークショップでの選択の目安である（[Enrollment の種類](https://learn.microsoft.com/ja-jp/azure/iot-dps/concepts-service#enrollment)、[DPS の利用シナリオ](https://learn.microsoft.com/ja-jp/azure/iot-dps/about-iot-dps#when-to-use-device-provisioning-service)）。
+
+| 観点 | IoT Hub への直接登録 | DPS の個別登録 | DPS のグループ登録 |
+| --- | --- | --- | --- |
+| クラウド側の事前準備 | 対象 Hub にデバイス ID を登録 | DPS にデバイスごとの Enrollment を用意 | DPS に共通の認証方式に基づく登録グループを用意 |
+| 接続先の決定 | 対象 Hub の接続情報をデバイスに設定 | DPS が登録設定・割り当てポリシーに基づいて決定 | DPS が登録設定・割り当てポリシーに基づいて決定 |
+| 主な利点 | DPS を追加せず、構成をシンプルにできる | 1 台ずつ管理しながら、Hub への登録・初期設定・割り当てを自動化できる | 多数のデバイスの登録許可・初期設定をグループ単位で管理できる |
+| 向いているケース | 少数台・接続先固定の検証 | 出荷先が決まってから Hub を割り当てたい機器、個別設定が必要な機器 | 共通の初期設定や同じテナントに属する多数の機器 |
+
+例えば、「機器は 1 台ずつ管理するが、出荷先の顧客が決まるまで接続先の Hub は決めない」場合は、個別登録でも DPS を使う意味がある。**登録エントリの管理をまとめることと、接続先をデバイスに固定しないことは別の利点**として説明する。グループ登録でも各デバイスの資格情報の準備は必要であり、全機器で同じ秘密情報を使い回す意味ではない（[DPS の事前準備と利用シナリオ](https://learn.microsoft.com/ja-jp/azure/iot-dps/about-iot-dps)、[登録グループの認証](https://learn.microsoft.com/ja-jp/azure/iot-dps/concepts-service#enrollment-group)）。
+
+個別登録・グループ登録のどちらも再プロビジョニング ポリシーを利用できる。ただし、設定変更だけで接続中のデバイスが即座に別の Hub へ移るわけではなく、デバイスから DPS に再度プロビジョニング要求を送る処理が必要である（[再プロビジョニング ポリシー](https://learn.microsoft.com/ja-jp/azure/iot-dps/concepts-device-reprovision#reprovisioning-policies)）。
+
+#### 登録後の運用につなげる
+
+本ワークショップでは、登録の自動化だけで本番運用が完成したとせず、次の設計事項につなげる。
+
+- 設定変更: Section 04 の Desired / Reported を踏まえ、対象デバイスと適用結果の確認方法を決める。
+- 更新・監視: アプリやファームウェアの更新、失敗時の復旧、稼働状況の監視について担当者と手順を決める。
+- 交換・廃棄: 新しいデバイスの準備だけでなく、古いデバイスの接続停止と再登録防止まで確認する。
+
+利用終了時には DPS の Enrollment と IoT Hub のデバイス ID の両方を扱います。DPS 側だけの無効化・削除では既存の IoT Hub 登録は削除されず、IoT Hub 側だけの削除では DPS 経由で再登録される可能性があります。登録グループの場合も含め、認証方式に応じた解除手順を確認します（[DPS と IoT Hub のプロビジョニング解除](https://learn.microsoft.com/ja-jp/azure/iot-dps/how-to-unprovision-devices)）。
 
 ### 配送先への認証・権限
 
@@ -166,6 +228,7 @@ IoT Hub を本番利用する際に、セキュリティ、信頼性、性能、
 1. 重要度は公式分類ではなく、実務上のリスクに基づく整理であると明示する
 2. 「未定義だと事故になるもの」から必須として説明する
 3. セキュリティ、信頼性、データ管理を最初に押さえる
+	- デモの手動登録から多数台の運用へ話を広げ、DPS のシーケンス図で初回登録と通常通信を区別する。続けて直接登録・個別登録・グループ登録を比較し、登録後の設定・更新・監視・廃棄につなげる
 	- セキュリティでは、Section 05 の Storage 配送を例に、デバイス・Portal 操作者・IoT Hub のマネージド ID の権限を区別する
 	- 続けて、権限とネットワーク到達性を区別し、承認された例外による直接配送と、Private Endpoint 必須の場合の受信アプリ構成を比較する
 	- 信頼性では、Section 04 の応答タイムアウトを例に、再試行前の結果確認と重複実行対策を説明する
@@ -178,9 +241,11 @@ IoT Hub を本番利用する際に、セキュリティ、信頼性、性能、
 | 1 | 非機能要件はリスクから優先する | 重要度分類の位置づけを明確にする | 必須 / 推奨 / 発展の 3 段階ピラミッド | 重要度は公式分類ではなく、実務リスクに基づく判断ガイドである |
 | 2 | 最初に決める要件 | 本番前に優先すべき観点を俯瞰する | セキュリティ、信頼性、データ管理を上段に置いた表 | 未定義だと事故・障害・復旧不能に直結するものを先に決める |
 | 3 | セキュリティの必須項目 | デバイスと資格情報のリスクを説明する | デバイス ID、資格情報、失効、最小権限のアイコン列 | デバイス単位の認証、資格情報管理、失効手順は本番前に決める |
-| 4 | 信頼性・性能の必須項目 | 停止・欠損・スロットリングへの備えを説明する | SLO/RTO/RPO と容量見積もりを並べたカード | IoT Hub 単体ではなく、エンドツーエンドで目標と容量を定義する |
-| 5 | 監視・運用・コスト | 初期リリース時点で方針を決める項目を整理する | メトリック、アラート、Runbook、予算のカード | 動いてから考えるのではなく、検知・対応・費用を事前に設計する |
-| 6 | 本番移行判定チェックリスト | 最後の確認観点を示す | 重要度付きチェックリスト | 必須項目が未定義なら、本番移行のリスクが高い |
+| 4 | 多数台の初回登録を DPS で自動化する | 手動登録から本番のライフサイクル管理につなげる | デバイス・DPS・IoT Hub のシーケンス図 | DPS が Hub に登録し、その後の直接通信・運用は別に設計する |
+| 5 | 個別登録でも DPS を使う意味はあるか | 台数だけでなく接続先の割り当て・変更要件から選ぶ | 直接登録・DPS 個別登録・グループ登録の比較表 | 登録管理の集約と接続先の分離は別の利点である |
+| 6 | 信頼性・性能の必須項目 | 停止・欠損・スロットリングへの備えを説明する | SLO/RTO/RPO と容量見積もりを並べたカード | IoT Hub 単体ではなく、エンドツーエンドで目標と容量を定義する |
+| 7 | 監視・運用・コスト | 初期リリース時点で方針を決める項目を整理する | メトリック、アラート、Runbook、予算のカード | 動いてから考えるのではなく、検知・対応・費用を事前に設計する |
+| 8 | 本番移行判定チェックリスト | 最後の確認観点を示す | 重要度付きチェックリスト | 必須項目が未定義なら、本番移行のリスクが高い |
 
 ## 本番移行判定
 | 重要度 | チェック項目 |
@@ -197,11 +262,14 @@ IoT Hub を本番利用する際に、セキュリティ、信頼性、性能、
 
 ## 図・デモで見せるもの
 - 必須 / 推奨 / 発展の 3 段階ピラミッド
+- DPS の初回登録から IoT Hub への直接接続までのシーケンス図（操作デモは追加しない）
+- IoT Hub への直接登録・DPS の個別登録・グループ登録の比較表
 - Well-Architected Framework の 5 つの柱と IoT の具体項目を対応させた表
 - 本番移行判定チェックリスト
 
 ## 強調するポイント
 - 「高可用」「安全」ではなく、SLO、RTO、RPO、責任者、対応手順まで落とす
+- DPS が登録・割り当てを担当し、その後の通常通信はデバイスと IoT Hub が直接行う（[DPS の動作](https://learn.microsoft.com/ja-jp/azure/iot-dps/about-iot-dps#how-device-provisioning-service-works)）
 - IoT Hub の SLA をそのままシステム全体の SLO にしない
 - デバイス、ネットワーク、IoT Hub、ルーティング先、可視化までをエンドツーエンドで考える
 - 配送先への認証・認可とネットワーク到達性を分け、接続方式を組織ポリシーと運用負担から決める
@@ -209,6 +277,10 @@ IoT Hub を本番利用する際に、セキュリティ、信頼性、性能、
 
 ## よくある誤解
 - Microsoft Learn に項目ごとの必須・推奨が明示されている
+- DPS に登録要求を送れば、事前設定のないデバイスでも無条件に登録される
+- DPS 経由で登録したデバイスは、通常のテレメトリも DPS 経由で送る
+- DPS の個別登録は、IoT Hub への直接登録と同じなので使う意味がない
+- DPS の割り当て設定を変えれば、デバイスからの再要求なしで接続先が即座に切り替わる
 - IoT Hub が高可用ならシステム全体も高可用である
 - コスト最適化は本番稼働後に考えればよい
 - Portal 操作者が Storage にアクセスできれば、IoT Hub からも書き込める
@@ -220,6 +292,9 @@ IoT Hub を本番利用する際に、セキュリティ、信頼性、性能、
 ## 理解度確認
 - 重要度は公式分類か、実務上の判断ガイドか
 - 本番前に必ず決めるべきセキュリティ項目は何か
+- DPS を利用する場合、誰が IoT Hub にデバイスを登録し、登録後のデバイスはどこへテレメトリを送るか
+- DPS の個別登録は、IoT Hub への直接登録と比べて何を分離・自動化できるか。逆に、直接登録で十分なのはどのような場合か
+- 登録を自動化した後も、設定・更新・監視・交換・廃棄について何を決める必要があるか
 - マネージド ID で IoT Hub から Storage に配送する場合、誰に、どのロールを、どの範囲で付与するか
 - 信頼されたサービスの例外、マネージド ID による認証、データアクセス権限は、それぞれ何を許可・確認するか
 - 配送先への Private Endpoint 接続が必須の場合、どの構成を候補にし、どの運用負担が増えるか
@@ -227,6 +302,10 @@ IoT Hub を本番利用する際に、セキュリティ、信頼性、性能、
 - 「開始状態にする」と「開始・停止を反転する」では、再試行時のリスクがどう違うか
 
 ## 参考リンク
+- [DPS の概要と登録フロー](https://learn.microsoft.com/ja-jp/azure/iot-dps/about-iot-dps)
+- [DPS の Enrollment](https://learn.microsoft.com/ja-jp/azure/iot-dps/concepts-service#enrollment)
+- [DPS の再プロビジョニング](https://learn.microsoft.com/ja-jp/azure/iot-dps/concepts-device-reprovision)
+- [DPS と IoT Hub のプロビジョニング解除](https://learn.microsoft.com/ja-jp/azure/iot-dps/how-to-unprovision-devices)
 - [IoT Hub のマネージド ID と配送先へのアクセス](https://learn.microsoft.com/ja-jp/azure/iot-hub/iot-hub-managed-identity)
 - [IoT Hub の Private Link と送信接続](https://learn.microsoft.com/ja-jp/azure/iot-hub/virtual-network-support)
 - [Azure Storage の Private Endpoint](https://learn.microsoft.com/ja-jp/azure/storage/common/storage-private-endpoints)

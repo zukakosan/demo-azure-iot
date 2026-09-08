@@ -12,6 +12,7 @@
 - D2C、Direct Method、Device Twin、C2D メッセージの用途を区別できる
 - メッセージルーティングと、受信ツールによる確認の違いを説明できる
 - DPS が自動化する登録・割り当てと、デバイス側で事前に必要な準備を区別できる
+- 対称キーの個別登録・グループ登録と X.509 の個別登録を体験し、登録方式と認証方式の違いを説明できる
 - デモ構成と本番構成の違い、今回の講義で扱わない範囲を説明できる
 
 ## 準備の順番
@@ -22,7 +23,7 @@
 | 2 | Direct Method による即時操作 | クラウド側から開始・停止を呼び出し、デバイス側のハンドラー、応答、送信状態の変化を追う | 要求と応答の流れ、およびデバイスが未接続の場合の扱いを説明できる |
 | 3 | Device Twin による設定同期 | Desired Properties で送信間隔を変更し、デバイスへの反映と Reported Properties の更新を確認する | Direct Method による操作と、Twin による状態・設定同期の違いを説明できる |
 | 4 | メッセージの配送 | 条件と配送先を設定して結果を比較する。環境制約で保存確認を保留した場合は未検証として記録する | 受信・配送・保存の違いと、配送先を用途・ネットワーク要件から選ぶ理由を説明できる |
-| 5 | DPS による初回接続の自動化 | DPS と IoT Hub をリンクし、個別登録した学習用デバイスの割り当て・接続・D2C・無効化を確認する | 手動登録との違い、DPS の役割、事前準備と再登録防止の必要性を説明できる |
+| 5 | DPS による初回接続と認証・登録方式の比較 | 対称キーの個別登録、グループ登録で2台、X.509 の個別登録を順に試し、割り当て・接続・D2C・無効化を確認する | DPS の役割、グループでも必要な個別資格情報、証明書と秘密鍵の違い、再登録防止を説明できる |
 | 6 | 本番利用への移行 | 切断・再送、資格情報、監視、容量、費用、接続方式、多数台の管理を確認する | 「デモで動く」状態から「運用できる」状態にするための確認事項を挙げられる |
 | 7 | 講義全体の組み立て | 各操作を Azure IoT の全体図に戻し、導入からまとめまで通して説明する | 今回扱う範囲と対象外の範囲を明示し、各章を一つのユースケースでつなげられる |
 
@@ -90,6 +91,51 @@
 
 手動登録したデバイスと、DPS（Device Provisioning Service）経由で登録したデバイスを比較します。講師自身の実践として取り組み、受講者向けの講義では役割と流れの紹介に留めます。
 
+#### 実践の順序と範囲
+
+登録方式と認証方式を同時に変えず、次の順で比較します。5-A〜5-C を講師の基本実践、5-D を発展課題とし、受講者向けの必須デモや講義時間は増やしません。これは本 Learning Path の学習順序であり、公式の推奨順位ではありません。
+
+| 順序 | 実践 | 台数 | 比較すること |
+| --- | --- | --- | --- |
+| 5-A | 対称キー・個別登録 | 1台 | DPS の登録・割り当てと通常通信の流れ |
+| 5-B | 対称キー・グループ登録 | 2台 | 認証方式を変えず、登録許可をまとめる意味を確認 |
+| 5-C | X.509・個別登録 | 1台 | 対称キーから証明書・秘密鍵へ変わる部分を確認 |
+| 5-D（発展） | X.509・グループ登録 | 2台 | CA と証明書チェーンによる登録許可を確認 |
+
+各実践は別の登録 ID を使い、既存の個別登録と混同しないようにします。2台の実践は同じ PC 上のシミュレートデバイスでよく、順番に実行しても構いません。登録結果・Hub 側の ID・D2C の受信結果を記録し、秘密情報は記録しません。
+
+#### 初回登録から通常通信までのシーケンス
+
+事前準備と実行時の動きを分け、初回登録が成功する場合の流れを示します。登録結果の取得に伴うポーリングなどの詳細と Private Endpoint は省略し、誰が誰に要求するかに集中します（[DPS の動作と事前準備](https://learn.microsoft.com/ja-jp/azure/iot-dps/about-iot-dps#how-device-provisioning-service-works)）。
+
+```mermaid
+sequenceDiagram
+    participant Device as デバイス
+    participant DPS as DPS
+    participant Hub as IoT Hub
+
+    Note over Device,Hub: 事前準備（管理者・製造者が実施）
+    Note over Device: 初期アプリ・資格情報を用意<br/>DPS の接続先・ID スコープ・登録 ID を設定
+    Note over DPS: Enrollment（登録を許可する条件）を設定
+    Note over DPS,Hub: DPS と既存の IoT Hub をリンク
+
+    Note over Device,Hub: 初回登録（成功時）
+    Device->>DPS: 登録要求・認証情報の提示
+    DPS->>DPS: Enrollment と照合して本人確認<br/>割り当て先の Hub を決定
+    DPS->>Hub: デバイスを登録
+    Hub-->>DPS: デバイス ID・登録情報
+    DPS-->>Device: 割り当て結果（Hub のホスト名・Device ID など）
+
+    Note over Device,Hub: 通常通信（DPS は経由しない）
+    Device->>Hub: 割り当て結果と資格情報を使って直接接続
+    Hub-->>Device: 接続成功
+    Device->>Hub: D2C テレメトリを送信
+```
+
+**DPS の Enrollment は登録を許可するための事前設定であり、IoT Hub のデバイス登録とは別です。** デバイスの要求を確認した DPS が Hub に登録し、その後はデバイスが Hub と直接通信します（[Enrollment の意味](https://learn.microsoft.com/ja-jp/azure/iot-dps/concepts-service#enrollment)、[DPS の登録フロー](https://learn.microsoft.com/ja-jp/azure/iot-dps/about-iot-dps#how-device-provisioning-service-works)）。
+
+#### 5-A: 対称キー・個別登録
+
 1. DPS を作成し、既存の IoT Hub をリンクする。
 2. 学習用デバイスの個別登録を作成する。最初は対称キー方式を使い、登録・割り当ての流れに集中する。
 3. デバイス側に初期アプリ、DPS の接続情報（ID スコープなど）、登録 ID とデバイス固有の資格情報を用意する。接続先 IoT Hub のデバイス接続文字列を手で指定する構成と比較する。
@@ -102,6 +148,39 @@
 
 無効化・削除は DPS と IoT Hub の両方で扱います。DPS 側だけでは既存の IoT Hub 登録が削除されず、IoT Hub 側だけでは DPS を通じて再登録される可能性があります。登録グループを使う場合は、個別登録を削除するだけで再登録防止になるとは限らないため、認証方式と登録階層に応じた手順が必要です（[プロビジョニング解除](https://learn.microsoft.com/ja-jp/azure/iot-dps/how-to-unprovision-devices)）。
 
+#### 5-B: 対称キー・グループ登録で2台を接続する
+
+登録グループでは、グループキーと各デバイスの登録 ID から派生デバイスキーを生成します。デバイスが認証に使うのは自分の派生キーであり、グループキーそのものではありません（[対称キーのグループ登録](https://learn.microsoft.com/ja-jp/azure/iot-dps/concepts-symmetric-key-attestation#group-enrollments-with-symmetric-keys)）。
+
+1. 対称キーの登録グループを一つ作り、新しい登録 ID を2台分用意する。対応する個別 Enrollment は作成しない。
+2. 管理・準備側で、それぞれの登録 ID に対応する派生デバイスキーを生成する。
+3. 各デバイスに自分の登録 ID と派生キーを設定し、5-A と同じ対称キー方式のアプリで DPS に登録する。
+4. 一つの登録グループから2台が登録され、DPS の登録結果と IoT Hub のデバイス ID が台ごとに確認できることを見る。
+5. 両方から D2C を送信し、デバイス ID と受信結果を対応させる。
+6. 学習用グループの無効化による新たな DPS 登録の拒否と、各 IoT Hub デバイスの無効化による新たな接続の拒否を分けて確認する。
+
+**グループキーはデバイスアプリに配布せず、各デバイスにはその派生キーだけを渡します。** グループキーの漏えいは、そのキーで認証する全デバイスに影響し得ます（[派生キーの作成と注意事項](https://learn.microsoft.com/ja-jp/azure/iot-dps/how-to-legacy-device-symm-key?pivots=programming-language-python#derive-a-device-key)）。グループ全体の無効化と、1台だけの登録拒否は別の操作として整理し、後者の詳細は発展課題とします（[グループ内デバイスのプロビジョニング解除](https://learn.microsoft.com/ja-jp/azure/iot-dps/how-to-unprovision-devices)）。
+
+#### 5-C: X.509・個別登録で認証方式を比較する
+
+公式の Python クイックスタートを使い、学習用の自己署名デバイス証明書と秘密鍵を作成します。証明書の CN は DPS の登録 ID に対応します。この手順で作る証明書は開発・テスト用であり、本番には使いません（[X.509 デバイスのクイックスタート](https://learn.microsoft.com/ja-jp/azure/iot-dps/quick-create-simulated-device-x509?pivots=programming-language-python)）。
+
+1. 証明書と秘密鍵を作成し、証明書の CN・発行者・有効期限を確認する。
+2. DPS に X.509 の個別登録を作成し、デバイス証明書を登録する。秘密鍵はアップロードしない。
+3. デバイス側に証明書・秘密鍵と DPS の接続情報を用意し、登録・割り当てを実行する。
+4. 割り当て先 IoT Hub に X.509 で接続し、D2C の受信まで確認する。
+5. 正常な鍵を残したまま、設定を別の学習用秘密鍵に差し替え、クライアント初期化または接続で失敗することを確認する。失敗箇所を記録し、DPS が拒否したとは一律に決めつけない。確認後は元の設定に戻す。
+6. 対称キー方式と比較し、資格情報の準備・クライアント生成・保管対象の変更と、接続後のテレメトリ処理の共通部分を整理する。
+7. 利用終了時に DPS の個別登録と IoT Hub のデバイスを無効化し、新たな登録・接続が拒否されることを確認する。
+
+**X.509 にしても秘密情報はなくならず、秘密鍵の保護が必要です。** 証明書を持っていることと、対応する秘密鍵を使って本人確認できることを区別します（[X.509 デバイスの証明書と秘密鍵](https://learn.microsoft.com/ja-jp/azure/iot-dps/iot-dps-https-x509-support#create-a-device-certificate)）。秘密鍵やパスフレーズは Git・ログ・画面共有に出さず、保護・更新・失効の本番設計は Step 6 につなげます。
+
+#### 5-D（発展）: X.509・グループ登録で2台を接続する
+
+学習用 CA と、その配下の異なるデバイス証明書・秘密鍵を2台分用意します。公式チュートリアルに沿って CA 証明書の DPS 登録・検証と登録グループを設定し、各デバイスの証明書チェーンで登録・D2C を確認します。個別 Enrollment を2件作らずに登録できることと、各デバイスの証明書・秘密鍵は別であることを確認します（[X.509 登録グループのチュートリアル](https://learn.microsoft.com/ja-jp/azure/iot-dps/tutorial-custom-hsm-enrollment-group-x509)）。
+
+CA の秘密鍵はデバイスへ配布せず、証明書の発行側で管理する設計にします。次の発展課題として、1台だけの登録拒否とグループ全体の登録拒否を比較します。DPS の登録拒否とは別に、既存の IoT Hub 接続を止める対応も必要です（[証明書階層による登録許可の制御](https://learn.microsoft.com/ja-jp/azure/iot-dps/concepts-x509-attestation#authentication-using-x509-certificates)、[プロビジョニング解除](https://learn.microsoft.com/ja-jp/azure/iot-dps/how-to-unprovision-devices)）。
+
 #### 到達目標
 
 - 手動登録と比較し、DPS が自動化するデバイス登録・接続先の割り当てを説明できる。
@@ -109,8 +188,11 @@
 - DPS は通常通信の中継先ではなく、登録後はデバイスが IoT Hub に直接接続すると説明できる。
 - 多数台でも共通アプリとデバイス固有の資格情報は別に準備し、DPS がソフトウェア配布を代行するわけではないと説明できる。
 - 利用終了時に、IoT Hub での接続停止と DPS での再登録防止をセットで扱う理由を説明できる。
+- 対称キーのグループ登録で2台の登録・D2C を確認し、グループキーと派生デバイスキーを区別できる。
+- X.509 の個別登録で登録・D2C と不一致の秘密鍵による失敗を確認し、証明書と秘密鍵の役割を説明できる。
+- 登録方式（個別・グループ）と認証方式（対称キー・X.509）を別の軸として比較できる。
 
-X.509 の登録グループ、複数 Hub への割り当て、再プロビジョニングは発展課題に回します。対称キーの個別登録を体験したことだけで、多数台の本番認証方式を決めたとは扱いません（[DPS の登録と機能](https://learn.microsoft.com/ja-jp/azure/iot-dps/about-iot-dps)、[X.509 登録グループによる複数デバイスの登録](https://learn.microsoft.com/ja-jp/azure/iot-dps/tutorial-custom-hsm-enrollment-group-x509)）。
+5-D、複数 Hub への割り当て、再プロビジョニング、証明書更新や CA 運用の詳細は発展課題に回します。基本実践の完了だけで、多数台の本番認証方式や資格情報の運用設計を決めたとは扱いません（[DPS の登録と機能](https://learn.microsoft.com/ja-jp/azure/iot-dps/about-iot-dps)）。
 
 ### Step 6: 本番化の論点を整理する
 
@@ -159,14 +241,26 @@ X.509 の登録グループ、複数 Hub への割り当て、再プロビジョ
 - [ ] DPS で学習用デバイスを登録・割り当てし、IoT Hub への接続と D2C の受信を確認した
 - [ ] DPS が自動化する範囲と、初期アプリ・資格情報の事前準備を説明できる
 - [ ] DPS の登録無効化と IoT Hub のデバイス無効化をそれぞれ確認した
+- [ ] 対称キーの登録グループ一つから2台を登録し、それぞれの D2C を確認した
+- [ ] グループキーは配布せず、デバイスごとに派生キーを渡す理由を説明できる
+- [ ] X.509 の個別登録で DPS・IoT Hub 接続と D2C を確認した
+- [ ] 証明書と不一致の秘密鍵による失敗を確認し、秘密鍵の保護が必要な理由を説明できる
 - [ ] 多数台の登録・設定・更新・監視・廃棄に必要な役割分担を説明できる
 - [ ] デモ失敗時に見せるログまたは画面を用意している
 - [ ] 90 分版と 120 分版の省略箇所を把握している
 - [ ] 終了後に削除するリソースを把握している
 
+### 発展課題のチェック（基本実践の完了条件には含めない）
+
+- [ ] X.509 の登録グループから異なる証明書・秘密鍵を持つ2台を登録し、D2C を確認した
+- [ ] 1台だけの登録拒否とグループ全体の登録拒否、IoT Hub 側の接続停止を区別して確認した
+
 ## 関連資料
 
 - [DPS の概要と初回接続の流れ](https://learn.microsoft.com/ja-jp/azure/iot-dps/about-iot-dps)
+- [対称キーの登録グループによるデバイス登録](https://learn.microsoft.com/ja-jp/azure/iot-dps/how-to-legacy-device-symm-key?pivots=programming-language-python)
+- [X.509 個別登録の Python クイックスタート](https://learn.microsoft.com/ja-jp/azure/iot-dps/quick-create-simulated-device-x509?pivots=programming-language-python)
+- [X.509 登録グループによる複数デバイスの登録](https://learn.microsoft.com/ja-jp/azure/iot-dps/tutorial-custom-hsm-enrollment-group-x509)
 - [DPS で自動登録したデバイスのプロビジョニング解除](https://learn.microsoft.com/ja-jp/azure/iot-dps/how-to-unprovision-devices)
 - [多数台のデバイス構成のベストプラクティス](https://learn.microsoft.com/ja-jp/azure/iot-hub/iot-hub-configuration-best-practices)
 - [講義全体のアジェンダ](../docs/agenda.md)
