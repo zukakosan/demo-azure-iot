@@ -36,19 +36,21 @@ Azure IoT の全体像は、IoT Hub の位置づけを理解するための導�
 ## タイムテーブル（120 分版）
 以下のタイムテーブルは、あくまで構成検討時の参考値であり、固定ではない。講義のフォーカスポイント、説明の深さ、デモや質疑の状況によって変動するため、到達目標と講義全体の所要時間を踏まえて柔軟に調整する。
 
+第3章は認証・受信経路・理解度確認を丁寧に説明するため、25分程度に拡張する。以下は全体120分を維持する配分例として、質疑・予備の10分から5分を移したもの。他章の説明時間と休憩時間は変更しない。
+
 | 時間 | セクション | 主な内容 | 詳細 |
 | --- | --- | --- | --- |
 | 0-5 分 | 導入 | 目的、到達目標、共通ユースケース | - |
 | 5-13 分 | Azure IoT の全体像 | 接続から保存・分析・制御までと、IoT Hub の位置づけ | [sections/01-overview/outline.md](sections/01-overview/outline.md) |
 | 13-20 分 | 接続パターンと今回の対象範囲 | 直接接続とエッジ経由を概観し、今回の範囲を示す | [sections/02-connection-patterns/outline.md](sections/02-connection-patterns/outline.md) |
-| 20-40 分 | IoT Hub の基本 | デバイスとバックエンドの役割、ID・認証・SDK、D2C、SKU の入口 | [sections/03-iot-hub-basics/outline.md](sections/03-iot-hub-basics/outline.md) |
-| 40-55 分 | デバイスの制御と状態同期 | 開始・停止と設定変更を例に、Direct Method・Twin・C2D を比較 | [sections/04-device-control-state-sync/outline.md](sections/04-device-control-state-sync/outline.md) |
-| 55-60 分 | 休憩 | - | - |
-| 60-70 分 | メッセージルーティング | 受信経路、具体的なメッセージと条件、後続サービスとの役割分担 | [sections/05-message-routing/outline.md](sections/05-message-routing/outline.md) |
-| 70-90 分 | デモ: 接続と双方向通信 | 登録・接続、D2C、開始・停止、Twin による設定変更 | [sections/06-demo-initial-deploy-device-connect/outline.md](sections/06-demo-initial-deploy-device-connect/outline.md) |
-| 90-105 分 | IoT Hub を本番で使う前に | 資格情報、切断・再送、容量、監視、費用、DPS への導線 | [sections/07-non-functional-requirements/outline.md](sections/07-non-functional-requirements/outline.md) |
-| 105-110 分 | まとめ | 全体図で振り返り、用途の選択問題と次の学習手順を示す | [sections/08-summary/outline.md](sections/08-summary/outline.md) |
-| 110-120 分 | 質疑・予備 | 質問への回答とデモ遅延の吸収 | - |
+| 20-45 分 | IoT Hub の基本 | デバイスとバックエンドの役割、ID・認証・SDK、D2C、SKU の入口 | [sections/03-iot-hub-basics/outline.md](sections/03-iot-hub-basics/outline.md) |
+| 45-60 分 | デバイスの制御と状態同期 | 開始・停止と設定変更を例に、Direct Method・Twin・C2D を比較 | [sections/04-device-control-state-sync/outline.md](sections/04-device-control-state-sync/outline.md) |
+| 60-65 分 | 休憩 | - | - |
+| 65-75 分 | メッセージルーティング | 受信経路、具体的なメッセージと条件、後続サービスとの役割分担 | [sections/05-message-routing/outline.md](sections/05-message-routing/outline.md) |
+| 75-95 分 | デモ: 接続と双方向通信 | 登録・接続、D2C、開始・停止、Twin による設定変更 | [sections/06-demo-initial-deploy-device-connect/outline.md](sections/06-demo-initial-deploy-device-connect/outline.md) |
+| 95-110 分 | IoT Hub を本番で使う前に | 資格情報、切断・再送、容量、監視、費用、DPS への導線 | [sections/07-non-functional-requirements/outline.md](sections/07-non-functional-requirements/outline.md) |
+| 110-115 分 | まとめ | 全体図で振り返り、用途の選択問題と次の学習手順を示す | [sections/08-summary/outline.md](sections/08-summary/outline.md) |
+| 115-120 分 | 質疑・予備 | 質問への回答とデモ遅延の吸収 | - |
 
 ## スライド枚数の方針
 各章のスライド枚数は固定せず、内容の充足度、説明の流れ、図やデモとの役割分担に応じて動的に変更できる。このアジェンダ、章別 outline、スライド案に記載する枚数は構成検討時の目安であり、上限・下限ではない。

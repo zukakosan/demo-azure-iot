@@ -1,0 +1,53 @@
+{
+  "first": "C:\\Users\\koishizu\\Documents\\github\\demo-azure-iot\\docs\\sections\\02-connection-patterns\\02-connection-patterns-rerun-20260908.pptx",
+  "second": "C:\\Users\\koishizu\\Documents\\github\\demo-azure-iot\\docs\\sections\\02-connection-patterns\\verification\\rerun-20260908\\repeat.pptx",
+  "sameInputs": true,
+  "sourceSHA256": "E040F50D70B7339EF2FBE051B41B8745D960CD7C4F4E741F9402F23AD590A8EA",
+  "templateSHA256": "A89CD99E310E836DCFAD5ADA2492D98622A17A517E3C0322442C50B322C18A34",
+  "ignoredXmlElements": [
+    "creationId",
+    "modId",
+    "colId",
+    "rowId"
+  ],
+  "slideCount": 4,
+  "checks": [
+    {
+      "slide": "02-01",
+      "contentLayoutLinksNotesEqual": true,
+      "renderedPixelsEqual": true,
+      "pixelSHA256": "91D4ECFABF674664D07DBC866B079920A5410058EE125831A9C3DB9E2DF89903",
+      "editableShapes": 15,
+      "pictures": 0,
+      "hyperlinks": 1
+    },
+    {
+      "slide": "02-02",
+      "contentLayoutLinksNotesEqual": true,
+      "renderedPixelsEqual": true,
+      "pixelSHA256": "571C2E1363187A8D647356E00AF0CD780D637CB009BF9210315C119B8D2B2584",
+      "editableShapes": 20,
+      "pictures": 0,
+      "hyperlinks": 3
+    },
+    {
+      "slide": "02-03",
+      "contentLayoutLinksNotesEqual": true,
+      "renderedPixelsEqual": true,
+      "pixelSHA256": "5ACF7BBFEF0C98A7D56DC2317E96B1B5D058E2F778FCC844B166C841F14FA448",
+      "editableShapes": 25,
+      "pictures": 0,
+      "hyperlinks": 6
+    },
+    {
+      "slide": "02-04",
+      "contentLayoutLinksNotesEqual": true,
+      "renderedPixelsEqual": true,
+      "pixelSHA256": "4191F51235B9FD3B9109CD433CBA2982BF6A821BABABFE5D2D5BA9CE04B132DB",
+      "editableShapes": 18,
+      "pictures": 0,
+      "hyperlinks": 2
+    }
+  ],
+  "scope": "Two consecutive runs in the same Windows/PowerPoint environment; not binary PPTX equality or cross-machine reproducibility."
+}

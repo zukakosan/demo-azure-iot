@@ -1,0 +1,1239 @@
+{
+  "graphAndBodyChecks": [
+    {
+      "nativeDiagram": true,
+      "slide": "02-01",
+      "edges": 2,
+      "nodes": 3,
+      "groups": 0,
+      "sourceBody": "exact",
+      "sourceTable": "exact"
+    },
+    {
+      "nativeDiagram": true,
+      "slide": "02-02",
+      "edges": 2,
+      "nodes": 3,
+      "groups": 2,
+      "sourceBody": "exact",
+      "sourceTable": "exact"
+    },
+    {
+      "nativeDiagram": true,
+      "slide": "02-03",
+      "edges": 4,
+      "nodes": 5,
+      "groups": 2,
+      "sourceBody": "exact",
+      "sourceTable": "exact"
+    },
+    {
+      "nativeDiagram": true,
+      "slide": "02-04",
+      "edges": 4,
+      "nodes": 5,
+      "groups": 0,
+      "sourceBody": "exact",
+      "sourceTable": "exact"
+    },
+    {
+      "nativeDiagram": true,
+      "slide": "02-01",
+      "edges": 2,
+      "nodes": 3,
+      "groups": 0,
+      "sourceBody": "exact",
+      "sourceTable": "exact"
+    },
+    {
+      "nativeDiagram": true,
+      "slide": "02-02",
+      "edges": 2,
+      "nodes": 3,
+      "groups": 2,
+      "sourceBody": "exact",
+      "sourceTable": "exact"
+    },
+    {
+      "nativeDiagram": true,
+      "slide": "02-03",
+      "edges": 4,
+      "nodes": 5,
+      "groups": 2,
+      "sourceBody": "exact",
+      "sourceTable": "exact"
+    },
+    {
+      "nativeDiagram": true,
+      "slide": "02-04",
+      "edges": 4,
+      "nodes": 5,
+      "groups": 0,
+      "sourceBody": "exact",
+      "sourceTable": "exact"
+    }
+  ],
+  "templateSHA256": "A89CD99E310E836DCFAD5ADA2492D98622A17A517E3C0322442C50B322C18A34",
+  "templateUnchanged": true,
+  "source": "C:\\Users\\koishizu\\Documents\\github\\demo-azure-iot\\docs\\sections\\02-connection-patterns\\slides.md",
+  "tolerancePt": 2,
+  "slideCount": 4,
+  "reopenedInPowerPoint": true,
+  "textMeasurements": [
+    {
+      "id": "02-01/TextBox 2",
+      "availableHeight": 39.6,
+      "width": 330.13,
+      "overflow": false,
+      "availableWidth": 845.0,
+      "height": 31.2
+    },
+    {
+      "id": "02-01/TextBox 5",
+      "availableHeight": 14.4,
+      "width": 8.13,
+      "overflow": false,
+      "availableWidth": 43.2,
+      "height": 12.0
+    },
+    {
+      "id": "02-01/source:lead",
+      "availableHeight": 42.0,
+      "width": 329.38,
+      "overflow": false,
+      "availableWidth": 867.8,
+      "height": 16.8
+    },
+    {
+      "id": "02-01/table/1/1",
+      "availableHeight": 38.4,
+      "width": 76.63,
+      "overflow": false,
+      "availableWidth": 77.0,
+      "height": 15.6
+    },
+    {
+      "id": "02-01/table/1/2",
+      "availableHeight": 38.4,
+      "width": 77.88,
+      "overflow": false,
+      "availableWidth": 287.0,
+      "height": 15.6
+    },
+    {
+      "id": "02-01/table/2/1",
+      "availableHeight": 60.0,
+      "width": 55.63,
+      "overflow": false,
+      "availableWidth": 77.0,
+      "height": 15.6
+    },
+    {
+      "id": "02-01/table/2/2",
+      "availableHeight": 60.0,
+      "width": 282.5,
+      "overflow": false,
+      "availableWidth": 287.0,
+      "height": 31.2
+    },
+    {
+      "id": "02-01/table/3/1",
+      "availableHeight": 60.0,
+      "width": 61.63,
+      "overflow": false,
+      "availableWidth": 77.0,
+      "height": 15.6
+    },
+    {
+      "id": "02-01/table/3/2",
+      "availableHeight": 60.0,
+      "width": 285.5,
+      "overflow": false,
+      "availableWidth": 287.0,
+      "height": 31.2
+    },
+    {
+      "id": "02-01/table/4/1",
+      "availableHeight": 56.0,
+      "width": 76.63,
+      "overflow": false,
+      "availableWidth": 77.0,
+      "height": 15.6
+    },
+    {
+      "id": "02-01/table/4/2",
+      "availableHeight": 56.0,
+      "width": 276.88,
+      "overflow": false,
+      "availableWidth": 287.0,
+      "height": 31.2
+    },
+    {
+      "id": "02-01/node:requirements",
+      "availableHeight": 56.0,
+      "width": 121.12,
+      "overflow": false,
+      "availableWidth": 134.0,
+      "height": 31.2
+    },
+    {
+      "id": "02-01/node:cloud",
+      "availableHeight": 54.0,
+      "width": 93.0,
+      "overflow": false,
+      "availableWidth": 190.0,
+      "height": 31.2
+    },
+    {
+      "id": "02-01/node:edge",
+      "availableHeight": 54.0,
+      "width": 124.5,
+      "overflow": false,
+      "availableWidth": 190.0,
+      "height": 31.2
+    },
+    {
+      "id": "02-01/edge-label:requirements:cloud",
+      "availableHeight": 42.0,
+      "width": 76.62,
+      "overflow": false,
+      "availableWidth": 96.0,
+      "height": 26.4
+    },
+    {
+      "id": "02-01/edge-label:requirements:edge",
+      "availableHeight": 44.0,
+      "width": 64.38,
+      "overflow": false,
+      "availableWidth": 96.0,
+      "height": 26.4
+    },
+    {
+      "id": "02-01/source:body:1",
+      "availableHeight": 47.0,
+      "width": 819.38,
+      "overflow": false,
+      "availableWidth": 868.0,
+      "height": 16.8
+    },
+    {
+      "id": "02-01/source:conclusion",
+      "availableHeight": 30.0,
+      "width": 496.75,
+      "overflow": false,
+      "availableWidth": 868.0,
+      "height": 18.0
+    },
+    {
+      "id": "02-02/TextBox 2",
+      "availableHeight": 39.6,
+      "width": 327.25,
+      "overflow": false,
+      "availableWidth": 845.0,
+      "height": 31.2
+    },
+    {
+      "id": "02-02/TextBox 5",
+      "availableHeight": 14.4,
+      "width": 8.13,
+      "overflow": false,
+      "availableWidth": 43.2,
+      "height": 12.0
+    },
+    {
+      "id": "02-02/source:lead",
+      "availableHeight": 42.0,
+      "width": 437.0,
+      "overflow": false,
+      "availableWidth": 867.8,
+      "height": 16.8
+    },
+    {
+      "id": "02-02/group-label:deviceSide",
+      "availableHeight": 36.0,
+      "width": 52.0,
+      "overflow": false,
+      "availableWidth": 202.0,
+      "height": 14.4
+    },
+    {
+      "id": "02-02/group-label:azureSide",
+      "availableHeight": 36.0,
+      "width": 33.5,
+      "overflow": false,
+      "availableWidth": 510.0,
+      "height": 14.4
+    },
+    {
+      "id": "02-02/node:sensor",
+      "availableHeight": 50.0,
+      "width": 78.12,
+      "overflow": false,
+      "availableWidth": 170.0,
+      "height": 33.6
+    },
+    {
+      "id": "02-02/node:hub",
+      "availableHeight": 50.0,
+      "width": 92.62,
+      "overflow": false,
+      "availableWidth": 150.0,
+      "height": 16.8
+    },
+    {
+      "id": "02-02/node:downstream",
+      "availableHeight": 50.0,
+      "width": 115.88,
+      "overflow": false,
+      "availableWidth": 154.0,
+      "height": 33.6
+    },
+    {
+      "id": "02-02/edge-label:sensor:hub",
+      "availableHeight": 52.0,
+      "width": 115.75,
+      "overflow": false,
+      "availableWidth": 115.0,
+      "height": 26.4
+    },
+    {
+      "id": "02-02/edge-label:hub:downstream",
+      "availableHeight": 30.0,
+      "width": 57.25,
+      "overflow": false,
+      "availableWidth": 102.0,
+      "height": 13.2
+    },
+    {
+      "id": "02-02/source:body:1",
+      "availableHeight": 50.0,
+      "width": 860.13,
+      "overflow": false,
+      "availableWidth": 868.0,
+      "height": 16.8
+    },
+    {
+      "id": "02-02/source:body:2",
+      "availableHeight": 50.0,
+      "width": 605.88,
+      "overflow": false,
+      "availableWidth": 868.0,
+      "height": 16.8
+    },
+    {
+      "id": "02-02/source:body:3",
+      "availableHeight": 50.0,
+      "width": 617.88,
+      "overflow": false,
+      "availableWidth": 868.0,
+      "height": 16.8
+    },
+    {
+      "id": "02-02/source:conclusion",
+      "availableHeight": 40.0,
+      "width": 542.25,
+      "overflow": false,
+      "availableWidth": 868.0,
+      "height": 18.0
+    },
+    {
+      "id": "02-03/TextBox 2",
+      "availableHeight": 39.6,
+      "width": 405.5,
+      "overflow": false,
+      "availableWidth": 845.0,
+      "height": 31.2
+    },
+    {
+      "id": "02-03/TextBox 5",
+      "availableHeight": 14.4,
+      "width": 8.13,
+      "overflow": false,
+      "availableWidth": 43.2,
+      "height": 12.0
+    },
+    {
+      "id": "02-03/source:lead",
+      "availableHeight": 42.0,
+      "width": 376.63,
+      "overflow": false,
+      "availableWidth": 867.8,
+      "height": 16.8
+    },
+    {
+      "id": "02-03/group-label:site",
+      "availableHeight": 36.0,
+      "width": 57.25,
+      "overflow": false,
+      "availableWidth": 664.0,
+      "height": 14.4
+    },
+    {
+      "id": "02-03/group-label:runtime",
+      "availableHeight": 36.0,
+      "width": 267.0,
+      "overflow": false,
+      "availableWidth": 434.0,
+      "height": 14.4
+    },
+    {
+      "id": "02-03/node:equipment",
+      "availableHeight": 49.0,
+      "width": 107.75,
+      "overflow": false,
+      "availableWidth": 122.0,
+      "height": 28.8
+    },
+    {
+      "id": "02-03/node:connector",
+      "availableHeight": 49.0,
+      "width": 97.25,
+      "overflow": false,
+      "availableWidth": 112.0,
+      "height": 14.4
+    },
+    {
+      "id": "02-03/node:broker",
+      "availableHeight": 49.0,
+      "width": 80.87,
+      "overflow": false,
+      "availableWidth": 112.0,
+      "height": 28.8
+    },
+    {
+      "id": "02-03/node:dataflow",
+      "availableHeight": 49.0,
+      "width": 57.25,
+      "overflow": false,
+      "availableWidth": 108.0,
+      "height": 28.8
+    },
+    {
+      "id": "02-03/node:cloud",
+      "availableHeight": 49.0,
+      "width": 106.75,
+      "overflow": false,
+      "availableWidth": 111.0,
+      "height": 28.8
+    },
+    {
+      "id": "02-03/edge-label:equipment:connector",
+      "availableHeight": 20.0,
+      "width": 41.75,
+      "overflow": false,
+      "availableWidth": 68.0,
+      "height": 13.2
+    },
+    {
+      "id": "02-03/edge-label:dataflow:cloud",
+      "availableHeight": 32.0,
+      "width": 41.25,
+      "overflow": false,
+      "availableWidth": 58.0,
+      "height": 26.4
+    },
+    {
+      "id": "02-03/source:body:1",
+      "availableHeight": 42.0,
+      "width": 859.13,
+      "overflow": false,
+      "availableWidth": 868.0,
+      "height": 31.2
+    },
+    {
+      "id": "02-03/source:body:2",
+      "availableHeight": 42.0,
+      "width": 793.0,
+      "overflow": false,
+      "availableWidth": 868.0,
+      "height": 15.6
+    },
+    {
+      "id": "02-03/source:body:3",
+      "availableHeight": 42.0,
+      "width": 799.25,
+      "overflow": false,
+      "availableWidth": 868.0,
+      "height": 15.6
+    },
+    {
+      "id": "02-03/source:conclusion",
+      "availableHeight": 45.0,
+      "width": 838.25,
+      "overflow": false,
+      "availableWidth": 868.0,
+      "height": 16.8
+    },
+    {
+      "id": "02-03/source:body:5",
+      "availableHeight": 59.0,
+      "width": 822.75,
+      "overflow": false,
+      "availableWidth": 868.0,
+      "height": 31.2
+    },
+    {
+      "id": "02-04/TextBox 2",
+      "availableHeight": 39.6,
+      "width": 366.88,
+      "overflow": false,
+      "availableWidth": 845.0,
+      "height": 31.2
+    },
+    {
+      "id": "02-04/TextBox 5",
+      "availableHeight": 14.4,
+      "width": 8.13,
+      "overflow": false,
+      "availableWidth": 43.2,
+      "height": 12.0
+    },
+    {
+      "id": "02-04/source:lead",
+      "availableHeight": 42.0,
+      "width": 793.0,
+      "overflow": false,
+      "availableWidth": 867.8,
+      "height": 16.8
+    },
+    {
+      "id": "02-04/node:direct",
+      "availableHeight": 44.0,
+      "width": 129.62,
+      "overflow": false,
+      "availableWidth": 210.0,
+      "height": 31.2
+    },
+    {
+      "id": "02-04/node:hub",
+      "availableHeight": 44.0,
+      "width": 85.5,
+      "overflow": false,
+      "availableWidth": 188.0,
+      "height": 31.2
+    },
+    {
+      "id": "02-04/node:equipment",
+      "availableHeight": 44.0,
+      "width": 115.12,
+      "overflow": false,
+      "availableWidth": 210.0,
+      "height": 31.2
+    },
+    {
+      "id": "02-04/node:operations",
+      "availableHeight": 44.0,
+      "width": 124.5,
+      "overflow": false,
+      "availableWidth": 188.0,
+      "height": 31.2
+    },
+    {
+      "id": "02-04/node:downstream",
+      "availableHeight": 52.0,
+      "width": 147.88,
+      "overflow": false,
+      "availableWidth": 174.0,
+      "height": 31.2
+    },
+    {
+      "id": "02-04/scope:device",
+      "availableHeight": 18.0,
+      "width": 56.0,
+      "overflow": false,
+      "availableWidth": 220.0,
+      "height": 13.2
+    },
+    {
+      "id": "02-04/table/1/1",
+      "availableHeight": 16.8,
+      "width": 63.88,
+      "overflow": false,
+      "availableWidth": 390.0,
+      "height": 15.0
+    },
+    {
+      "id": "02-04/table/1/2",
+      "availableHeight": 16.8,
+      "width": 66.25,
+      "overflow": false,
+      "availableWidth": 187.0,
+      "height": 15.0
+    },
+    {
+      "id": "02-04/table/1/3",
+      "availableHeight": 16.8,
+      "width": 95.75,
+      "overflow": false,
+      "availableWidth": 237.0,
+      "height": 15.0
+    },
+    {
+      "id": "02-04/table/2/1",
+      "availableHeight": 23.0,
+      "width": 180.63,
+      "overflow": false,
+      "availableWidth": 390.0,
+      "height": 15.0
+    },
+    {
+      "id": "02-04/table/2/2",
+      "availableHeight": 23.0,
+      "width": 89.5,
+      "overflow": false,
+      "availableWidth": 187.0,
+      "height": 15.0
+    },
+    {
+      "id": "02-04/table/2/3",
+      "availableHeight": 23.0,
+      "width": 82.5,
+      "overflow": false,
+      "availableWidth": 237.0,
+      "height": 15.0
+    },
+    {
+      "id": "02-04/table/3/1",
+      "availableHeight": 23.0,
+      "width": 252.38,
+      "overflow": false,
+      "availableWidth": 390.0,
+      "height": 15.0
+    },
+    {
+      "id": "02-04/table/3/2",
+      "availableHeight": 23.0,
+      "width": 81.25,
+      "overflow": false,
+      "availableWidth": 187.0,
+      "height": 15.0
+    },
+    {
+      "id": "02-04/table/3/3",
+      "availableHeight": 23.0,
+      "width": 120.13,
+      "overflow": false,
+      "availableWidth": 237.0,
+      "height": 15.0
+    },
+    {
+      "id": "02-04/table/4/1",
+      "availableHeight": 23.0,
+      "width": 204.38,
+      "overflow": false,
+      "availableWidth": 390.0,
+      "height": 15.0
+    },
+    {
+      "id": "02-04/table/4/2",
+      "availableHeight": 23.0,
+      "width": 57.25,
+      "overflow": false,
+      "availableWidth": 187.0,
+      "height": 15.0
+    },
+    {
+      "id": "02-04/table/4/3",
+      "availableHeight": 23.0,
+      "width": 92.25,
+      "overflow": false,
+      "availableWidth": 237.0,
+      "height": 15.0
+    },
+    {
+      "id": "02-04/source:body:1",
+      "availableHeight": 30.0,
+      "width": 524.38,
+      "overflow": false,
+      "availableWidth": 868.0,
+      "height": 14.4
+    },
+    {
+      "id": "02-04/source:conclusion",
+      "availableHeight": 28.0,
+      "width": 450.13,
+      "overflow": false,
+      "availableWidth": 868.0,
+      "height": 18.0
+    },
+    {
+      "id": "02-01/TextBox 2",
+      "availableHeight": 39.6,
+      "width": 330.13,
+      "overflow": false,
+      "availableWidth": 845.0,
+      "height": 31.2
+    },
+    {
+      "id": "02-01/TextBox 5",
+      "availableHeight": 14.4,
+      "width": 8.13,
+      "overflow": false,
+      "availableWidth": 43.2,
+      "height": 12.0
+    },
+    {
+      "id": "02-01/source:lead",
+      "availableHeight": 42.0,
+      "width": 329.38,
+      "overflow": false,
+      "availableWidth": 867.8,
+      "height": 16.8
+    },
+    {
+      "id": "02-01/table/1/1",
+      "availableHeight": 19.0,
+      "width": 76.63,
+      "overflow": false,
+      "availableWidth": 77.0,
+      "height": 15.6
+    },
+    {
+      "id": "02-01/table/1/2",
+      "availableHeight": 19.0,
+      "width": 77.88,
+      "overflow": false,
+      "availableWidth": 287.0,
+      "height": 15.6
+    },
+    {
+      "id": "02-01/table/2/1",
+      "availableHeight": 56.0,
+      "width": 55.63,
+      "overflow": false,
+      "availableWidth": 77.0,
+      "height": 15.6
+    },
+    {
+      "id": "02-01/table/2/2",
+      "availableHeight": 56.0,
+      "width": 282.5,
+      "overflow": false,
+      "availableWidth": 287.0,
+      "height": 31.2
+    },
+    {
+      "id": "02-01/table/3/1",
+      "availableHeight": 56.0,
+      "width": 61.63,
+      "overflow": false,
+      "availableWidth": 77.0,
+      "height": 15.6
+    },
+    {
+      "id": "02-01/table/3/2",
+      "availableHeight": 56.0,
+      "width": 285.5,
+      "overflow": false,
+      "availableWidth": 287.0,
+      "height": 31.2
+    },
+    {
+      "id": "02-01/table/4/1",
+      "availableHeight": 56.0,
+      "width": 76.63,
+      "overflow": false,
+      "availableWidth": 77.0,
+      "height": 15.6
+    },
+    {
+      "id": "02-01/table/4/2",
+      "availableHeight": 56.0,
+      "width": 276.88,
+      "overflow": false,
+      "availableWidth": 287.0,
+      "height": 31.2
+    },
+    {
+      "id": "02-01/node:requirements",
+      "availableHeight": 56.0,
+      "width": 121.12,
+      "overflow": false,
+      "availableWidth": 134.0,
+      "height": 31.2
+    },
+    {
+      "id": "02-01/node:cloud",
+      "availableHeight": 54.0,
+      "width": 93.0,
+      "overflow": false,
+      "availableWidth": 190.0,
+      "height": 31.2
+    },
+    {
+      "id": "02-01/node:edge",
+      "availableHeight": 54.0,
+      "width": 124.5,
+      "overflow": false,
+      "availableWidth": 190.0,
+      "height": 31.2
+    },
+    {
+      "id": "02-01/edge-label:requirements:cloud",
+      "availableHeight": 42.0,
+      "width": 76.62,
+      "overflow": false,
+      "availableWidth": 96.0,
+      "height": 26.4
+    },
+    {
+      "id": "02-01/edge-label:requirements:edge",
+      "availableHeight": 44.0,
+      "width": 64.38,
+      "overflow": false,
+      "availableWidth": 96.0,
+      "height": 26.4
+    },
+    {
+      "id": "02-01/source:body:1",
+      "availableHeight": 47.0,
+      "width": 819.38,
+      "overflow": false,
+      "availableWidth": 868.0,
+      "height": 16.8
+    },
+    {
+      "id": "02-01/source:conclusion",
+      "availableHeight": 30.0,
+      "width": 496.75,
+      "overflow": false,
+      "availableWidth": 868.0,
+      "height": 18.0
+    },
+    {
+      "id": "02-02/TextBox 2",
+      "availableHeight": 39.6,
+      "width": 327.25,
+      "overflow": false,
+      "availableWidth": 845.0,
+      "height": 31.2
+    },
+    {
+      "id": "02-02/TextBox 5",
+      "availableHeight": 14.4,
+      "width": 8.13,
+      "overflow": false,
+      "availableWidth": 43.2,
+      "height": 12.0
+    },
+    {
+      "id": "02-02/source:lead",
+      "availableHeight": 42.0,
+      "width": 437.0,
+      "overflow": false,
+      "availableWidth": 867.8,
+      "height": 16.8
+    },
+    {
+      "id": "02-02/group-label:deviceSide",
+      "availableHeight": 36.0,
+      "width": 52.0,
+      "overflow": false,
+      "availableWidth": 202.0,
+      "height": 14.4
+    },
+    {
+      "id": "02-02/group-label:azureSide",
+      "availableHeight": 36.0,
+      "width": 33.5,
+      "overflow": false,
+      "availableWidth": 510.0,
+      "height": 14.4
+    },
+    {
+      "id": "02-02/node:sensor",
+      "availableHeight": 50.0,
+      "width": 78.12,
+      "overflow": false,
+      "availableWidth": 170.0,
+      "height": 33.6
+    },
+    {
+      "id": "02-02/node:hub",
+      "availableHeight": 50.0,
+      "width": 92.62,
+      "overflow": false,
+      "availableWidth": 150.0,
+      "height": 16.8
+    },
+    {
+      "id": "02-02/node:downstream",
+      "availableHeight": 50.0,
+      "width": 115.88,
+      "overflow": false,
+      "availableWidth": 154.0,
+      "height": 33.6
+    },
+    {
+      "id": "02-02/edge-label:sensor:hub",
+      "availableHeight": 52.0,
+      "width": 115.75,
+      "overflow": false,
+      "availableWidth": 115.0,
+      "height": 26.4
+    },
+    {
+      "id": "02-02/edge-label:hub:downstream",
+      "availableHeight": 30.0,
+      "width": 57.25,
+      "overflow": false,
+      "availableWidth": 102.0,
+      "height": 13.2
+    },
+    {
+      "id": "02-02/source:body:1",
+      "availableHeight": 50.0,
+      "width": 860.13,
+      "overflow": false,
+      "availableWidth": 868.0,
+      "height": 16.8
+    },
+    {
+      "id": "02-02/source:body:2",
+      "availableHeight": 50.0,
+      "width": 605.88,
+      "overflow": false,
+      "availableWidth": 868.0,
+      "height": 16.8
+    },
+    {
+      "id": "02-02/source:body:3",
+      "availableHeight": 50.0,
+      "width": 617.88,
+      "overflow": false,
+      "availableWidth": 868.0,
+      "height": 16.8
+    },
+    {
+      "id": "02-02/source:conclusion",
+      "availableHeight": 40.0,
+      "width": 542.25,
+      "overflow": false,
+      "availableWidth": 868.0,
+      "height": 18.0
+    },
+    {
+      "id": "02-03/TextBox 2",
+      "availableHeight": 39.6,
+      "width": 405.5,
+      "overflow": false,
+      "availableWidth": 845.0,
+      "height": 31.2
+    },
+    {
+      "id": "02-03/TextBox 5",
+      "availableHeight": 14.4,
+      "width": 8.13,
+      "overflow": false,
+      "availableWidth": 43.2,
+      "height": 12.0
+    },
+    {
+      "id": "02-03/source:lead",
+      "availableHeight": 42.0,
+      "width": 376.63,
+      "overflow": false,
+      "availableWidth": 867.8,
+      "height": 16.8
+    },
+    {
+      "id": "02-03/group-label:site",
+      "availableHeight": 36.0,
+      "width": 57.25,
+      "overflow": false,
+      "availableWidth": 664.0,
+      "height": 14.4
+    },
+    {
+      "id": "02-03/group-label:runtime",
+      "availableHeight": 36.0,
+      "width": 267.0,
+      "overflow": false,
+      "availableWidth": 434.0,
+      "height": 14.4
+    },
+    {
+      "id": "02-03/node:equipment",
+      "availableHeight": 49.0,
+      "width": 107.75,
+      "overflow": false,
+      "availableWidth": 122.0,
+      "height": 28.8
+    },
+    {
+      "id": "02-03/node:connector",
+      "availableHeight": 49.0,
+      "width": 97.25,
+      "overflow": false,
+      "availableWidth": 112.0,
+      "height": 14.4
+    },
+    {
+      "id": "02-03/node:broker",
+      "availableHeight": 49.0,
+      "width": 80.87,
+      "overflow": false,
+      "availableWidth": 112.0,
+      "height": 28.8
+    },
+    {
+      "id": "02-03/node:dataflow",
+      "availableHeight": 49.0,
+      "width": 57.25,
+      "overflow": false,
+      "availableWidth": 108.0,
+      "height": 28.8
+    },
+    {
+      "id": "02-03/node:cloud",
+      "availableHeight": 49.0,
+      "width": 106.75,
+      "overflow": false,
+      "availableWidth": 111.0,
+      "height": 28.8
+    },
+    {
+      "id": "02-03/edge-label:equipment:connector",
+      "availableHeight": 20.0,
+      "width": 41.75,
+      "overflow": false,
+      "availableWidth": 68.0,
+      "height": 13.2
+    },
+    {
+      "id": "02-03/edge-label:dataflow:cloud",
+      "availableHeight": 32.0,
+      "width": 41.25,
+      "overflow": false,
+      "availableWidth": 58.0,
+      "height": 26.4
+    },
+    {
+      "id": "02-03/source:body:1",
+      "availableHeight": 42.0,
+      "width": 859.13,
+      "overflow": false,
+      "availableWidth": 868.0,
+      "height": 31.2
+    },
+    {
+      "id": "02-03/source:body:2",
+      "availableHeight": 42.0,
+      "width": 793.0,
+      "overflow": false,
+      "availableWidth": 868.0,
+      "height": 15.6
+    },
+    {
+      "id": "02-03/source:body:3",
+      "availableHeight": 42.0,
+      "width": 799.25,
+      "overflow": false,
+      "availableWidth": 868.0,
+      "height": 15.6
+    },
+    {
+      "id": "02-03/source:conclusion",
+      "availableHeight": 45.0,
+      "width": 838.25,
+      "overflow": false,
+      "availableWidth": 868.0,
+      "height": 16.8
+    },
+    {
+      "id": "02-03/source:body:5",
+      "availableHeight": 59.0,
+      "width": 822.75,
+      "overflow": false,
+      "availableWidth": 868.0,
+      "height": 31.2
+    },
+    {
+      "id": "02-04/TextBox 2",
+      "availableHeight": 39.6,
+      "width": 366.88,
+      "overflow": false,
+      "availableWidth": 845.0,
+      "height": 31.2
+    },
+    {
+      "id": "02-04/TextBox 5",
+      "availableHeight": 14.4,
+      "width": 8.13,
+      "overflow": false,
+      "availableWidth": 43.2,
+      "height": 12.0
+    },
+    {
+      "id": "02-04/source:lead",
+      "availableHeight": 42.0,
+      "width": 793.0,
+      "overflow": false,
+      "availableWidth": 867.8,
+      "height": 16.8
+    },
+    {
+      "id": "02-04/node:direct",
+      "availableHeight": 44.0,
+      "width": 129.62,
+      "overflow": false,
+      "availableWidth": 210.0,
+      "height": 31.2
+    },
+    {
+      "id": "02-04/node:hub",
+      "availableHeight": 44.0,
+      "width": 85.5,
+      "overflow": false,
+      "availableWidth": 188.0,
+      "height": 31.2
+    },
+    {
+      "id": "02-04/node:equipment",
+      "availableHeight": 44.0,
+      "width": 115.12,
+      "overflow": false,
+      "availableWidth": 210.0,
+      "height": 31.2
+    },
+    {
+      "id": "02-04/node:operations",
+      "availableHeight": 44.0,
+      "width": 124.5,
+      "overflow": false,
+      "availableWidth": 188.0,
+      "height": 31.2
+    },
+    {
+      "id": "02-04/node:downstream",
+      "availableHeight": 52.0,
+      "width": 147.88,
+      "overflow": false,
+      "availableWidth": 174.0,
+      "height": 31.2
+    },
+    {
+      "id": "02-04/scope:device",
+      "availableHeight": 18.0,
+      "width": 56.0,
+      "overflow": false,
+      "availableWidth": 220.0,
+      "height": 13.2
+    },
+    {
+      "id": "02-04/table/1/1",
+      "availableHeight": 15.0,
+      "width": 63.88,
+      "overflow": false,
+      "availableWidth": 390.0,
+      "height": 15.0
+    },
+    {
+      "id": "02-04/table/1/2",
+      "availableHeight": 15.0,
+      "width": 66.25,
+      "overflow": false,
+      "availableWidth": 187.0,
+      "height": 15.0
+    },
+    {
+      "id": "02-04/table/1/3",
+      "availableHeight": 15.0,
+      "width": 95.75,
+      "overflow": false,
+      "availableWidth": 237.0,
+      "height": 15.0
+    },
+    {
+      "id": "02-04/table/2/1",
+      "availableHeight": 23.0,
+      "width": 180.63,
+      "overflow": false,
+      "availableWidth": 390.0,
+      "height": 15.0
+    },
+    {
+      "id": "02-04/table/2/2",
+      "availableHeight": 23.0,
+      "width": 89.5,
+      "overflow": false,
+      "availableWidth": 187.0,
+      "height": 15.0
+    },
+    {
+      "id": "02-04/table/2/3",
+      "availableHeight": 23.0,
+      "width": 82.5,
+      "overflow": false,
+      "availableWidth": 237.0,
+      "height": 15.0
+    },
+    {
+      "id": "02-04/table/3/1",
+      "availableHeight": 23.0,
+      "width": 252.38,
+      "overflow": false,
+      "availableWidth": 390.0,
+      "height": 15.0
+    },
+    {
+      "id": "02-04/table/3/2",
+      "availableHeight": 23.0,
+      "width": 81.25,
+      "overflow": false,
+      "availableWidth": 187.0,
+      "height": 15.0
+    },
+    {
+      "id": "02-04/table/3/3",
+      "availableHeight": 23.0,
+      "width": 120.13,
+      "overflow": false,
+      "availableWidth": 237.0,
+      "height": 15.0
+    },
+    {
+      "id": "02-04/table/4/1",
+      "availableHeight": 23.0,
+      "width": 204.38,
+      "overflow": false,
+      "availableWidth": 390.0,
+      "height": 15.0
+    },
+    {
+      "id": "02-04/table/4/2",
+      "availableHeight": 23.0,
+      "width": 57.25,
+      "overflow": false,
+      "availableWidth": 187.0,
+      "height": 15.0
+    },
+    {
+      "id": "02-04/table/4/3",
+      "availableHeight": 23.0,
+      "width": 92.25,
+      "overflow": false,
+      "availableWidth": 237.0,
+      "height": 15.0
+    },
+    {
+      "id": "02-04/source:body:1",
+      "availableHeight": 30.0,
+      "width": 524.38,
+      "overflow": false,
+      "availableWidth": 868.0,
+      "height": 14.4
+    },
+    {
+      "id": "02-04/source:conclusion",
+      "availableHeight": 28.0,
+      "width": 450.13,
+      "overflow": false,
+      "availableWidth": 868.0,
+      "height": 18.0
+    }
+  ],
+  "sourceSHA256": "E040F50D70B7339EF2FBE051B41B8745D960CD7C4F4E741F9402F23AD590A8EA",
+  "output": "C:\\Users\\koishizu\\Documents\\github\\demo-azure-iot\\docs\\sections\\02-connection-patterns\\verification\\rerun-20260908\\repeat.pptx",
+  "template": "C:\\Users\\koishizu\\Documents\\github\\demo-azure-iot\\docs\\references\\opus-template-sample-002.pptx"
+}

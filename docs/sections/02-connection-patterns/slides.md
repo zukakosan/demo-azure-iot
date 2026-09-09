@@ -5,9 +5,9 @@
 - 元原稿: [outline.md](outline.md)。元の4枚構成を具体化したスライド本文案。
 - 対象者: これから Azure IoT Hub を使い始める人。通信プロトコルの事前知識は不要。
 - 到達点: クラウド直接接続とエッジ経由の違いを説明し、今回の講義が IoT Hub への直接接続を扱うと理解できる。
-- 想定時間: 7分。[アジェンダ](../../agenda.md)の第02章の時間枠に合わせる。
+- 想定時間: 7分（参考値）。[アジェンダ](../../agenda.md)の方針に従い、フォーカスポイントに応じて調整する。
 - 扱わない内容: サービスの網羅的な選定、エッジ環境の構築、認証・通信機能の詳細、分析基盤の実装。
-- 構成上の判断: アジェンダの導入圧縮案は draft のため、今回は指定された outline の4枚を維持する。比較は接続の入口に絞り、最後に今回の対象範囲を示す。
+- 構成上の判断: 要件、直接接続、エッジ経由、ハイブリッドと今回の対象範囲を説明する4枚構成とする。枚数は固定の制約ではなく、説明の流れに応じて変更できる。比較は接続の入口に絞る。
 - 編集方法: 「投影本文」はスライドに載せる原稿、「図の構成」は配置・関係の指定、「講師ノート」は口頭補足。出典は該当する本文に併記し、PowerPoint 化するときも該当ページにリンクを残す。
 - 以下の工場・温度センサーは説明用の仮定であり、特定の顧客の採用構成ではない。
 - 技術情報の確認日: 2026-09-08。
@@ -18,8 +18,8 @@
 | --- | --- | --- | --- | --- |
 | 02-01 | 接続パターンを決める3つの要件 | 1分 | 接続先を考える前に確認する条件 | 要件から接続パターンへの分岐図 |
 | 02-02 | IoT Hub へのクラウド直接接続 | 1分45秒 | デバイスとクラウドの接続関係 | 温度センサーから IoT Hub への構成図 |
-| 02-03 | IoT Operations によるエッジ経由接続 | 2分15秒 | 現場で接続・処理する構成と前提 | 現場とクラウドを分けた構成図 |
-| 02-04 | ハイブリッド構成と今回の対象範囲 | 2分 | 拠点ごとの使い分けと本編の範囲 | 2経路の構成図と3行の比較表 |
+| 02-03 | エッジ経由接続: IoT Operations と IoT Edge | 2分15秒 | IoT Operations の構成と IoT Edge の位置づけ | 現場とクラウドを分けた構成図と IoT Edge の紹介 |
+| 02-04 | ハイブリッド構成と今回の対象範囲 | 2分 | 拠点ごとの使い分けと本編の範囲 | 2経路の構成図と4行の比較表 |
 
 ---
 
@@ -39,7 +39,7 @@
 | ネットワーク | デバイスからクラウドへの接続を許可できるか。現場のネットワーク内に限定する必要があるか。 |
 | 処理する場所 | クラウドで処理できるか。通信遅延や切断に備えて、現場側で処理する必要があるか。 |
 
-クラウド直接接続では **Azure IoT Hub**、現場のエッジ環境を経由する接続では **Azure IoT Operations** が代表的な選択肢になる（[Azure IoT とは](https://learn.microsoft.com/ja-jp/azure/iot/iot-introduction)）。
+クラウド直接接続では **Azure IoT Hub**、エッジ経由接続では **Azure IoT Operations** や **Azure IoT Edge** を検討する（[Azure IoT とは](https://learn.microsoft.com/ja-jp/azure/iot/iot-introduction)、[IoT Edge の概要](https://learn.microsoft.com/ja-jp/azure/iot-edge/about-iot-edge)）。
 
 **接続パターンは、サービス名ではなく通信・ネットワーク・処理場所の要件から考える。**
 
@@ -51,8 +51,8 @@
 ```mermaid
 flowchart LR
     requirements["通信・ネットワーク・処理場所の要件"]
-    requirements -->|"直接接続でき、クラウド側で処理"| cloud["クラウド直接接続\nAzure IoT Hub"]
-    requirements -->|"現場で接続・処理する必要"| edge["エッジ経由接続\nAzure IoT Operations"]
+    requirements -->|"直接接続でき、\nクラウド側で処理"| cloud["クラウド直接接続\nAzure IoT Hub"]
+    requirements -->|"現場で接続・\n処理する必要"| edge["エッジ経由接続\nAzure IoT Operations\nAzure IoT Edge"]
 ```
 
 図は上記の公式資料を基にした接続パターンの概念図であり、製品選定を確定する診断ではない。
@@ -114,27 +114,32 @@ flowchart LR
 
 ---
 
-## 02-03 IoT Operations によるエッジ経由接続
+## 02-03 エッジ経由接続: IoT Operations と IoT Edge
 
 ### このページの役割
 
-直接接続との違いを「設備の接続先」と「処理する場所」で示す。IoT Operations を単なる転送ゲートウェイとして扱わず、現場側に実行環境が必要であることも伝える。
+直接接続との違いを「設備の接続先」と「処理する場所」で示す。IoT Operations の構成を例に、現場側の実行環境を説明する。IoT Edge は別の選択肢として見出し付きで紹介し、現場でのコンテナー実行と IoT Hub への接続を伝える。詳細比較や構築手順には入らない。
 
 ### 投影本文
 
-**設備のデータを現場で収集・加工し、クラウドの後続サービスへ送る。**
+**IoT Operations の構成例: 設備のデータを現場で収集・加工し、クラウドへ送る。**
 
-- **設備との接続:** OPC UA は産業機器のデータ交換に使う標準。IoT Operations の OPC UA 用コネクタは、設備側の OPC UA サーバーから取得したデータを MQTT ブローカーへ発行する（[OPC UA 用コネクタとは](https://learn.microsoft.com/ja-jp/azure/iot-operations/discover-manage-assets/overview-opc-ua-connector)）。
+- **設備との接続:** OPC UA は産業機器のデータ交換の標準。コネクタが設備のデータを取得し、MQTT ブローカーへ発行する（[OPC UA 用コネクタとは](https://learn.microsoft.com/ja-jp/azure/iot-operations/discover-manage-assets/overview-opc-ua-connector)）。
 - **現場での処理:** MQTT ブローカーでデータを受け渡し、データフローで加工・配送する。実行基盤は **Azure Arc 対応 Kubernetes**（[Azure IoT Operations とは](https://learn.microsoft.com/ja-jp/azure/iot-operations/overview-iot-operations)）。
 - **検討する条件:** 産業プロトコルへの対応、現場での低遅延処理、設備からの直接インターネット接続の制限がある場合（[Azure IoT とは](https://learn.microsoft.com/ja-jp/azure/iot/iot-introduction#edge-connected-pattern)、[OPC UA 用コネクタとは](https://learn.microsoft.com/ja-jp/azure/iot-operations/discover-manage-assets/overview-opc-ua-connector)）。
 
-**注意: 完全閉域での無期限運用を前提にしない。オフライン動作は最大72時間で、期間中も機能が低下する可能性がある。**（[Azure IoT Operations とは](https://learn.microsoft.com/ja-jp/azure/iot-operations/overview-iot-operations)）
+**IoT Operations の注意: オフライン動作は最大72時間で、機能が低下する可能性がある。完全閉域での無期限運用を前提にしない。**（[Azure IoT Operations とは](https://learn.microsoft.com/ja-jp/azure/iot-operations/overview-iot-operations)）
+
+**Azure IoT Edge: もう一つのエッジ接続の選択肢**
+
+デバイス上でコンテナー化した処理を実行し、**IoT Hub へのゲートウェイ**としても利用できる。**現在もサポートされている**（2026-09-08 確認。本章では紹介のみ）（[IoT Edge の概要](https://learn.microsoft.com/ja-jp/azure/iot-edge/about-iot-edge)、[ゲートウェイ](https://learn.microsoft.com/ja-jp/azure/iot-edge/iot-edge-as-gateway)、[サポート期間](https://learn.microsoft.com/ja-jp/azure/iot-edge/version-history)）。
 
 ### 図の構成
 
 - 上半分に構成図、下半分に接続・処理の説明と注意事項を置く。オフライン条件を脚注だけに隠さない。
 - 「工場・現場」の枠内に設備と実行基盤を配置し、クラウドとの境界を明示する。
 - MQTT ブローカーは「データの受け渡し」、データフローは「加工・配送」と図中で説明する。
+- 下部の IoT Edge は独立した見出しと本文で示す。上の構成図と72時間の条件は IoT Operations の説明であり、IoT Edge に適用する図・条件ではない。
 
 ```mermaid
 flowchart LR
@@ -149,7 +154,7 @@ flowchart LR
         connector --> broker
         broker --> dataflow
     end
-    dataflow -->|"加工したデータ"| cloud["クラウドの後続サービス\n例: Microsoft Fabric"]
+    dataflow -->|"加工した\nデータ"| cloud["クラウドの後続サービス\n例: Microsoft Fabric"]
 ```
 
 図は IoT Operations の公式概要を基にしたデータ経路の概念図。Azure Arc などの管理通信は省略している。階層化されたネットワークでも Azure への通信経路を構成するため、「設備が直接接続しない」と「現場全体が Azure に接続しない」は区別する（[階層化されたネットワーク](https://learn.microsoft.com/ja-jp/azure/iot-operations/manage-layered-network/concept-layered-network)）。
@@ -179,15 +184,17 @@ flowchart LR
 | --- | --- | --- |
 | デバイスが直接クラウドへ接続できる | クラウド直接接続 | Azure IoT Hub |
 | OPC UA などで設備に接続し、現場側で処理する | エッジ経由接続 | Azure IoT Operations |
-| 上記の要件が拠点・設備ごとに混在する | ハイブリッド | 両方を使い分ける |
+| デバイス上でコンテナー処理を行い、IoT Hub へ接続する | エッジ経由接続 | Azure IoT Edge + IoT Hub |
+| 直接接続とエッジ経由の要件が混在する | ハイブリッド | 要件に応じて組み合わせる |
 
-この表は接続パターンの入口を整理したもので、採用を確定する選定表ではない（[Azure IoT サービスを選択する](https://learn.microsoft.com/ja-jp/azure/iot/iot-services-and-technologies)）。
+表は選択肢の例であり、採用を確定する選定表ではない（[サービスの選択](https://learn.microsoft.com/ja-jp/azure/iot/iot-services-and-technologies)、[IoT Edge の概要](https://learn.microsoft.com/ja-jp/azure/iot-edge/about-iot-edge)）。
 
 **今回扱う範囲: デバイスアプリ → IoT Hub → データの受信・デバイス操作。**
 
 ### 図の構成
 
 - 上半分に2経路、下半分に比較表と今回の対象範囲を配置する。
+- 図は IoT Operations を使う併用例。表では IoT Edge と IoT Hub を使う選択肢も別行で示し、エッジ経由が IoT Operations だけだと誤解させない。
 - 上段のデバイスと IoT Hub に「今回の対象」と明記する。下段には「構成紹介のみ」と添え、色だけで区別しない。
 - 両経路の右端に共通の「後続の蓄積・分析・可視化」を配置する。具体的な連携設定は第05章以降の担当として省略する。
 
@@ -209,7 +216,7 @@ flowchart LR
 ### 講師ノート
 
 - 目安: 2分。比較と図を約1分、理解度確認を約30秒、次章への接続を約30秒で説明する。
-- 結論: 「IoT Hub か IoT Operations かを会社全体で一つに決めるのではなく、デバイスと現場の要件から接続を考えます」。
+- 結論: 「直接接続かエッジ経由かを要件から考えます。エッジ経由には IoT Operations のほか、IoT Edge と IoT Hub を使う選択肢もあります」。
 - 蓄積・分析・可視化の要件は接続方式と別の検討軸。Azure Device Registry の管理の役割と、Microsoft Fabric などのデータ活用の役割を混同しない（[Azure IoT とは](https://learn.microsoft.com/ja-jp/azure/iot/iot-introduction#services-and-applications)）。
 - 理解度確認: 「工場設備は OPC UA、別拠点のセンサーは直接クラウドに接続できます。すべてを同じ方式にする必要がありますか？」
 - 想定回答: 「ありません。工場設備は IoT Operations、直接接続のセンサーは IoT Hub を中心に、ハイブリッド構成を検討できます」。

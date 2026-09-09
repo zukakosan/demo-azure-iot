@@ -2,6 +2,7 @@ param(
     [string]$Template = (Join-Path $PSScriptRoot '../../references/opus-template-sample-002.pptx'),
     [string]$Source = (Join-Path $PSScriptRoot 'slides.md'),
     [string]$Output = (Join-Path $PSScriptRoot '02-connection-patterns-from-slides.pptx'),
+    [string]$VerificationDirectory = (Join-Path $PSScriptRoot 'verification'),
     [switch]$ValidateOnly,
     [switch]$Force
 )
@@ -13,7 +14,7 @@ $outputPath = [IO.Path]::GetFullPath($Output)
 $raw = [IO.File]::ReadAllText($sourcePath).Replace("`r`n", "`n")
 $sourceHash = (Get-FileHash $sourcePath -Algorithm SHA256).Hash
 $templateHash = (Get-FileHash $templatePath -Algorithm SHA256).Hash
-$verification = Join-Path $PSScriptRoot 'verification'
+$verification = [IO.Path]::GetFullPath($VerificationDirectory)
 
 function Convert-Inline([string]$Value) {
     $links = [Collections.Generic.List[object]]::new()
@@ -87,10 +88,12 @@ $pages = @(foreach ($section in [regex]::Matches($raw, '(?ms)^## (02-0[1-4]) ([^
 })
 if ($pages.Count -ne 4) { throw 'Expected four source slides' }
 $counts = @(@(3, 2, 0), @(3, 2, 2), @(5, 4, 2), @(5, 4, 0))
+$paragraphCounts = @(3, 5, 7, 3)
 for ($pageIndex = 0; $pageIndex -lt 4; $pageIndex++) {
     $graph = $pages[$pageIndex].graph
     $actual = @($graph.nodes.Count, $graph.edges.Count, $graph.groups.Count)
     if (($actual -join ',') -ne ($counts[$pageIndex] -join ',')) { throw "Unexpected graph structure on page $pageIndex" }
+    if ($pages[$pageIndex].paragraphs.Count -ne $paragraphCounts[$pageIndex]) { throw "Unexpected body paragraph count on page $pageIndex; update its layout before generating." }
 }
 if ($ValidateOnly) {
     $pages | ForEach-Object { '{0}: {1} nodes, {2} directed edges, {3} groups, {4} body paragraphs' -f $_.id, $_.graph.nodes.Count, $_.graph.edges.Count, $_.graph.groups.Count, $_.paragraphs.Count }
@@ -332,7 +335,7 @@ try {
                 Add-Graph $slide $page.graph @{
                     requirements = @(461, 231, 144, 66)
                     cloud = @(713, 154, 200, 64)
-                    edge = @(713, 326, 200, 64)
+                    edge = @(713, 316, 200, 84)
                 } @{} @{
                     0 = @(611, 142, 96, 42)
                     1 = @(611, 367, 96, 44)
@@ -359,22 +362,24 @@ try {
             }
             2 {
                 Add-Graph $slide $page.graph @{
-                    equipment = @(60, 210, 132, 59)
-                    connector = @(280, 210, 122, 59)
-                    broker = @(436, 210, 122, 59)
-                    dataflow = @(592, 210, 118, 59)
-                    cloud = @(792, 210, 121, 59)
+                    equipment = @(60, 185, 132, 59)
+                    connector = @(280, 185, 122, 59)
+                    broker = @(436, 185, 122, 59)
+                    dataflow = @(592, 185, 118, 59)
+                    cloud = @(792, 185, 121, 59)
                 } @{
-                    site = @(46, 130, 680, 158)
-                    runtime = @(268, 162, 450, 116)
+                    site = @(46, 125, 680, 132)
+                    runtime = @(268, 152, 450, 98)
                 } @{
-                    0 = @(196, 215, 68, 20)
-                    3 = @(730, 178, 58, 32)
+                    0 = @(196, 190, 68, 20)
+                    3 = @(730, 153, 58, 32)
                 } 12
                 for ($paragraphIndex = 1; $paragraphIndex -le 3; $paragraphIndex++) {
-                    [void](Add-Text $slide "source:body:$paragraphIndex" $page.paragraphs[$paragraphIndex] 46 (304 + ($paragraphIndex - 1) * 51) 868 49 13)
+                    [void](Add-Text $slide "source:body:$paragraphIndex" $page.paragraphs[$paragraphIndex] 46 (269 + ($paragraphIndex - 1) * 36) 868 34 13)
                 }
-                [void](Add-Text $slide 'source:conclusion' $page.paragraphs[4] 46 471 868 49 14 $ink $true)
+                [void](Add-Text $slide 'source:conclusion' $page.paragraphs[4] 46 382 868 40 13 $ink $true)
+                [void](Add-Text $slide 'source:body:5' $page.paragraphs[5] 46 430 868 27 18 $blue $true)
+                [void](Add-Text $slide 'source:body:6' $page.paragraphs[6] 46 465 868 59 14)
             }
             3 {
                 Add-Graph $slide $page.graph @{
@@ -385,8 +390,8 @@ try {
                     downstream = @(719, 184, 184, 62)
                 } @{} @{} 13
                 [void](Add-Text $slide 'scope:device' '今回の対象' 60 116 220 18 11 $blue)
-                [void](Add-Table $slide $page.rows @(46, 316, 868, 132) @(408, 205, 255) @(27, 35, 35, 35) 12.5)
-                [void](Add-Text $slide 'source:body:1' $page.paragraphs[1] 46 457 868 30 12)
+                [void](Add-Table $slide $page.rows @(46, 300, 868, 163) @(408, 205, 255) @(27, 34, 34, 34, 34) 12.5)
+                [void](Add-Text $slide 'source:body:1' $page.paragraphs[1] 46 470 868 23 12)
                 [void](Add-Text $slide 'source:conclusion' $page.paragraphs[2] 46 496 868 28 15 $blue $true)
             }
         }
