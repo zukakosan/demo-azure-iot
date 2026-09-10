@@ -145,6 +145,8 @@ IoT Explorer でのテレメトリ表示は、IoT Hub の組み込みエンド�
 
 ### Storage への保存: タイミングと形式
 
+> **講師メモ（口頭補足）:** ここで扱うのは、デバイスが IoT Hub に送った D2C メッセージを IoT Hub が Storage へ配送する「メッセージルーティング」である。デバイスが IoT Hub の認証を使ってアップロード用 SAS URI を取得し、画像や診断ログなどのファイル本体を Blob Storage へ直接送る「ファイルアップロード」とは別の機能である。本講義では機能の違いを短く紹介するに留め、設定やデモは扱わない（[IoT Hub のファイルアップロード](https://learn.microsoft.com/ja-jp/azure/iot-hub/iot-hub-devguide-file-upload)）。
+
 #### バッチ頻度とチャンクサイズ
 
 IoT Hub は、Storage へメッセージを一件ずつ即時保存するのではなく、まとめて書き込む。**バッチ頻度の時間が経過するか、チャンクサイズに達するか、どちらか先に条件を満たすと書き出す。** デバイスのテレメトリ送信間隔とは別の設定である（[Storage への一括書き込み](https://learn.microsoft.com/ja-jp/azure/iot-hub/iot-hub-devguide-endpoints#azure-storage-as-a-routing-endpoint)）。

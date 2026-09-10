@@ -2,6 +2,9 @@
 
 ## 成果物
 
+- [新テンプレート版PowerPoint](03-iot-hub-basics-opus-slides-sample-001.pptx): `opus-slides-sample-001.pptx` のスライド11を本文レイアウトとして使った12枚版。右上に講座名、右下にページ番号を配置し、下部を完全URLの出典欄として確保する。
+- [新テンプレート版PDF](03-iot-hub-basics-opus-slides-sample-001.pdf): 同じPowerPointから出力。
+- 新テンプレート版の描画画像・検査記録は [verification/opus-slides-sample-001/generated](verification/opus-slides-sample-001/generated/) に分離する。
 - [PowerPoint](03-iot-hub-basics-protocols.pptx): 12枚、25分程度。プロトコル比較をSDKの説明から独立させた現行版。図形・表・本文は編集可能。
 - [確認用PDF](03-iot-hub-basics-protocols.pdf): 同じPowerPointから出力。
 - 前回の11枚版は [PowerPoint](03-iot-hub-basics.pptx) と [PDF](03-iot-hub-basics.pdf) を変更せず保持する。
@@ -11,7 +14,7 @@
 
 ## 実行環境
 
-今回の検証環境はWindows、PowerShell 7、インストール済みのデスクトップ版PowerPoint。生成はPowerPoint COMを利用し、独自のフォントや外部の生成ライブラリは追加しない。テンプレートは [opus-template-sample-002.pptx](../../references/opus-template-sample-002.pptx) を使う。
+今回の検証環境はWindows、PowerShell 7、インストール済みのデスクトップ版PowerPoint。生成はPowerPoint COMを利用し、独自のフォントや外部の生成ライブラリは追加しない。テンプレートは [opus-template-sample-002.pptx](../../template/opus-template-sample-002.pptx)、デザインガイドは [design-template.md](../../template/design-template.md) を使う。
 
 リポジトリのルートから実行する。
 
@@ -19,10 +22,25 @@
 pwsh -File ./docs/sections/03-iot-hub-basics/build-slides.ps1 -ValidateOnly
 ```
 
+新テンプレート版を再生成する場合:
+
+```powershell
+pwsh -File ./docs/sections/03-iot-hub-basics/build-slides.ps1 `
+  -Template ./docs/template/opus-slides-sample-001.pptx `
+  -DesignGuide ./docs/template/design-template.md `
+  -Output ./docs/sections/03-iot-hub-basics/03-iot-hub-basics-opus-slides-sample-001.pptx `
+  -VerificationDirectory ./docs/sections/03-iot-hub-basics/verification/opus-slides-sample-001/generated `
+  -Force
+```
+
+指定テンプレートはPowerPointで開けるOLE複合ファイルであり、PowerPoint 16で保存してもZIP形式のOpen XMLコンテナには変換されない。新テンプレート版ではXML検査を非適用とし、PowerPoint COMによる全文、ノート、リンク、ネイティブ図形、文字枠、保存後の再オープン検査を `structure.json` に記録する。
+
 現在の配布版を残して別の出力先へ再生成する例:
 
 ```powershell
 pwsh -File ./docs/sections/03-iot-hub-basics/build-slides.ps1 `
+  -Template ./docs/template/opus-template-sample-002.pptx `
+  -DesignGuide ./docs/template/design-template.md `
   -Output ./docs/sections/03-iot-hub-basics/03-iot-hub-basics-regenerated.pptx `
   -VerificationDirectory ./docs/sections/03-iot-hub-basics/verification/regenerated
 ```
@@ -38,6 +56,8 @@ pwsh -File ./docs/sections/03-iot-hub-basics/build-slides.ps1 -Force
 ## 検査と編集上の注意
 
 - 12枚・ノートの合計1500秒を確認し、全タイトルと全投影本文の各要素を、生成直後と再オープン後に照合する。出典は本文中の番号と同ページのリンクへ変換し、完全なURLをノートに保持する。
+- デザインガイドのパス、SHA256、適用規則を各スライドのノートと `validation.json` に記録する。本文・表は16pt以上、図中補足は12pt以上、出典は10pt以上を生成時に検査し、ページ番号が右下にあることも確認する。
+- 出典欄には番号、出典名、完全URLを表示し、表示全体に同じリンク先を設定する。URLフラグメントはPowerPointが `Address` と `SubAddress` に分離するため、検査時に合成して表示URLと照合する。
 - 図表はPowerPointの図形・線・表・テキスト。元の本文スライドを複製し、マスター・レイアウト・タイトル位置・罫線を継承する。独自の表紙は追加しない。
 - 本文の改行と出典ラベル短縮を除き、原稿の文言は省略しない。各ページの役割・図の指定・講師ノートもノートに格納する。確認問題の答えは投影しない。
 - 文の追加や表の行数を変更した場合は、配置コードの調整と再描画が必要。機械検査の成功だけを、視覚的な読みやすさの保証としない。

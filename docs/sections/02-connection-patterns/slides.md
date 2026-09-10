@@ -77,7 +77,7 @@ flowchart LR
 
 **デバイスアプリがクラウドへ直接接続し、IoT Hub を通じてデータを送受信する。**
 
-- **接続するもの:** 温度センサーなどのデバイス上で動くアプリ。IoT Hub は MQTT、AMQP、HTTPS によるデバイス接続をサポートする（[Azure IoT サービスを選択する](https://learn.microsoft.com/ja-jp/azure/iot/iot-services-and-technologies#azure-iot-hub)）。
+- **接続するもの:** 温度センサーなどのデバイス上で動くアプリ。IoT Hub は MQTT、AMQP、HTTPS によるデバイス接続をサポートする（[通信プロトコルの選択](https://learn.microsoft.com/ja-jp/azure/iot-hub/iot-hub-devguide-protocols)）。
 - **適する条件:** デバイスからクラウドへ通信でき、分散したデバイスのデータをクラウド側へ集めたい（[Azure IoT とは](https://learn.microsoft.com/ja-jp/azure/iot/iot-introduction#cloud-connected-pattern)）。
 - **役割の分担:** IoT Hub はデバイスとの通信を担い、蓄積・分析・可視化は後続のサービスで行う（[Azure IoT とは](https://learn.microsoft.com/ja-jp/azure/iot/iot-introduction#services-and-applications)）。
 
