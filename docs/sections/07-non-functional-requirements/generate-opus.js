@@ -151,7 +151,7 @@ function cover() {
     s.addText(t, { x: cx, y: 4.38, w, h: 0.5, fontFace: JP, fontSize: 13, color: P.white, align: "center", valign: "middle", margin: 0 });
     cx += w + 0.25;
   });
-  s.addText("Azure IoT ワークショップ ／ 本編 15 分・11 枚", {
+  s.addText("Azure IoT ワークショップ ／ 本編 16 分・12 枚", {
     x: 0.9, y: 6.5, w: 11, h: 0.4, fontFace: JP, fontSize: 12, color: "9FC7D1", margin: 0,
   });
 }
@@ -245,7 +245,7 @@ function s03() {
 
 // ---- 07-04 配送先の権限とネットワーク到達性を分ける --------------------
 function s04() {
-  const s = pptx.addSlide(); header(s, "04", "認証・認可・ネットワーク", "配送先の権限とネットワーク到達性を分ける");
+  const s = pptx.addSlide(); header(s, "04", "認証・認可・ネットワーク", "ルーティング先への到達性は3つの層で確認する");
   lead(s, "デバイスが IoT Hub に送信できても、IoT Hub が Storage に書き込めるとは限らない。");
   // Portal 操作者（別主体）
   s.addShape(S.roundRect, { x: MX, y: 2.05, w: 4.4, h: 0.44, rectRadius: 0.06, fill: { color: P.white }, line: { color: P.muted, width: 1, dashType: "dash" } });
@@ -286,9 +286,70 @@ function s04() {
   footer(s, 5);
 }
 
-// ---- 07-05 DPS の仕組みとメリット ------------------------------------
+// ---- 07-05 入口と出口でネットワーク経路を分ける ------------------------
+function sNet() {
+  const s = pptx.addSlide(); header(s, "05", "ネットワーク経路", "入口と出口でネットワーク経路を分ける");
+  lead(s, "IoT Hub を中心に、手前のデバイス側が入口、その先の配送先側が出口。それぞれ公開経路と閉域経路を分けて決める。");
+  const head = ["通信", "公開エンドポイント経由", "閉域（VNet / Private Endpoint）経由"];
+  const rows = [
+    ["デバイス → IoT Hub", "インターネットから IoT Hub の公開エンドポイントへ接続。広域に分散したデバイスの基本構成[1]", "オンプレミス → VPN / ExpressRoute → VNet（自社専用のネットワーク区画）の Private Endpoint（Hub 専用の非公開の入口）へ接続。公開ネットワークアクセスは無効化できる[1]"],
+    ["IoT Hub → 配送先\n(Storage / Event Hubs / Service Bus)", "直接ルーティングは配送先の公開エンドポイントを使用。制限時は「信頼された Microsoft サービスの例外」（配送先が Hub からの接続を許可する設定）とマネージド ID を併用[2]", "直接ルーティングを VNet 経由へ変更することはできない。VNet 内の受信アプリ（自分で用意する中継アプリ）が組み込みエンドポイント[1]から読み、配送先の Private Endpoint へ書き込む[2]"],
+  ];
+  const body = [head.map((h) => ({ text: h, options: { fill: { color: P.primary }, color: P.white, bold: true, fontFace: JP, fontSize: 11.5, align: "left", valign: "middle" } }))];
+  rows.forEach((r, ri) => {
+    body.push(r.map((c, ci) => ({
+      text: c,
+      options: { fill: { color: ri % 2 ? P.softer : P.white }, color: ci === 0 ? P.primary : P.ink, bold: ci === 0, fontFace: JP, fontSize: 10.5, align: "left", valign: "middle" },
+    })));
+  });
+  s.addTable(body, { x: MX, y: 2.05, w: CW, colW: [2.55, 4.77, 4.77], rowH: [0.5, 1.15, 1.4], border: { pt: 0.75, color: P.line }, margin: [3, 6, 3, 6], valign: "middle", autoPage: false });
+  bullets(s, [
+    "「バックボーン経由か VNet 経由か」は二者択一ではない。Private Link も通信は Azure バックボーンを経由する[3]",
+    "デバイス側の Private Endpoint はオンプレミス内のデバイス向けで、広域に分散したデバイスには推奨されない[1]",
+  ], 5.16, { size: 11.5, gap: 6, h: 0.6 });
+  callout(s, "IoT Hub の Private Endpoint は Hub への入口を閉じる設定で、Hub から配送先へ出る接続には効かない。作っても直接ルーティングまで閉域化されるわけではない。[1][2]", 5.82);
+  sources(s, [
+    "https://learn.microsoft.com/ja-jp/azure/iot-hub/virtual-network-support#ingress-connectivity-to-iot-hub-using-azure-private-link",
+    "https://learn.microsoft.com/ja-jp/azure/iot-hub/virtual-network-support#egress-connectivity-from-iot-hub-to-other-azure-resources",
+    "https://learn.microsoft.com/ja-jp/azure/private-link/private-link-overview",
+  ]);
+  footer(s, 6);
+}
+
+// ---- 07-06 IoT Hub の信頼性を障害の粒度で備える ------------------------
+function sReli() {
+  const s = pptx.addSlide(); header(s, "06", "IoT Hub の信頼性", "IoT Hub の信頼性を一時障害・ゾーン・リージョンで備える");
+  lead(s, "信頼性は共有責任。障害の粒度ごとに、IoT Hub が自動でやることと利用者が備えることを分ける。");
+  const head = ["障害の粒度", "IoT Hub 側の仕組み", "利用者側で行うこと"];
+  const rows = [
+    ["一時的な障害\n（短時間・断続的）", "高可用だが、分散環境では短時間の障害が起こり得る", "リトライ（指数バックオフ＋ジッター）と再接続ロジックを実装[2]"],
+    ["可用性ゾーン障害", "対応リージョンはゾーン冗長を自動適用。データ損失なし・追加コストなし・正常ゾーンへ自動再ルーティング[1]", "ゾーン冗長に対応したリージョンにデプロイ。処理中の要求はリトライで復旧[1]"],
+    ["リージョン障害", "単一リージョンサービス。ペアリージョンへ非同期レプリケーション（DR）[1]", "デバイス接続の自動リージョンフェールオーバーは無い。必要なら多リージョン戦略を設計[1]"],
+  ];
+  const body = [head.map((h) => ({ text: h, options: { fill: { color: P.primary }, color: P.white, bold: true, fontFace: JP, fontSize: 11.5, align: "left", valign: "middle" } }))];
+  const rowColors = [P.softer, P.white, P.softer];
+  rows.forEach((r, ri) => {
+    body.push(r.map((c, ci) => ({
+      text: c,
+      options: { fill: { color: rowColors[ri] }, color: ci === 0 ? P.primary : P.ink, bold: ci === 0, fontFace: JP, fontSize: 10.5, align: "left", valign: "middle" },
+    })));
+  });
+  s.addTable(body, { x: MX, y: 2.05, w: CW, colW: [2.75, 4.67, 4.67], rowH: [0.5, 0.88, 0.9, 0.9], border: { pt: 0.75, color: P.line }, margin: [3, 6, 3, 6], valign: "middle", autoPage: false });
+  bullets(s, [
+    "ゾーン・リージョン障害とも、処理中の要求は失われ得る。復旧はデバイス側のリトライが前提[1]",
+    "リージョン フェールオーバー後も FQDN（接続文字列）は不変だが IP は変わる。IP をキャッシュしない[1]",
+  ], 5.28, { size: 11, gap: 6, h: 0.54 });
+  callout(s, "規模に関わらず、一時的な障害へのリトライ実装が信頼性の出発点。ゾーンは対応リージョン選択、リージョンは DR 設計で備える。", 5.86);
+  sources(s, [
+    "https://learn.microsoft.com/ja-jp/azure/reliability/reliability-iot-hub",
+    "https://learn.microsoft.com/ja-jp/azure/iot/concepts-manage-device-reconnections#retry-patterns",
+  ]);
+  footer(s, 7);
+}
+
+// ---- 07-07 DPS の仕組みとメリット ------------------------------------
 function s05() {
-  const s = pptx.addSlide(); header(s, "05", "DPS の仕組みとメリット", "DPS で初回登録と接続先割り当てを自動化する");
+  const s = pptx.addSlide(); header(s, "07", "DPS の仕組みとメリット", "DPS で初回登録と接続先割り当てを自動化する");
   lead(s, "DPS は、デバイスを認証して接続先 IoT Hub を割り当てる、初回登録の自動化サービス。");
   // 初回登録フロー
   const fy = 2.15, fh = 0.7;
@@ -328,12 +389,12 @@ function s05() {
     "https://learn.microsoft.com/ja-jp/azure/iot-dps/about-iot-dps#how-device-provisioning-service-works",
     "https://learn.microsoft.com/ja-jp/azure/iot-dps/concepts-service#enrollment",
   ]);
-  footer(s, 6);
+  footer(s, 8);
 }
 
-// ---- 07-06 登録方式の使い分け ----------------------------------------
+// ---- 07-08 登録方式の使い分け ----------------------------------------
 function sMethods() {
-  const s = pptx.addSlide(); header(s, "06", "登録方式の使い分け", "直接登録・個別登録・グループ登録を選ぶ");
+  const s = pptx.addSlide(); header(s, "08", "登録方式の使い分け", "直接登録・個別登録・グループ登録を選ぶ");
   lead(s, "台数と接続先の要件から、IoT Hub への直接登録と DPS の登録方式を選ぶ。");
   tableAt(s, ["方式", "クラウド側の事前準備", "向いている例"], [
     ["IoT Hub へ直接登録", "接続先 Hub にデバイス ID を登録", "少数台で接続先が固定される検証"],
@@ -351,47 +412,12 @@ function sMethods() {
     "https://learn.microsoft.com/ja-jp/azure/iot-dps/concepts-service#enrollment-group",
     "https://learn.microsoft.com/ja-jp/azure/iot-dps/concepts-device-reprovision#reprovisioning-policies",
   ]);
-  footer(s, 7);
+  footer(s, 9);
 }
 
-// ---- 07-06 大量オンボーディングは時間差登録と再試行で守る --------------
-function s06() {
-  const s = pptx.addSlide(); header(s, "07", "大規模オンボーディング", "大量登録は時間差登録と再試行で守る");
-  lead(s, "大量デバイスを一斉に登録せず、DPS の制限と計画期間から登録バッチを分散する。");
-  const py = 2.15, ph = 2.15, pw = (CW - 0.4) / 2, lx = MX, rx = MX + pw + 0.4;
-  // 左パネル: 一斉登録（避ける）
-  s.addShape(S.roundRect, { x: lx, y: py, w: pw, h: ph, rectRadius: 0.08, fill: { color: P.softer }, line: { color: P.amber, width: 1.25 } });
-  s.addShape(S.rect, { x: lx, y: py, w: pw, h: 0.42, fill: { color: P.amber }, line: { type: "none" } });
-  s.addText("一斉登録（避ける）", { x: lx, y: py, w: pw, h: 0.42, fontFace: JP, fontSize: 12.5, bold: true, color: P.white, align: "center", valign: "middle", margin: 0 });
-  s.addShape(S.line, { x: lx + 0.4, y: py + ph - 0.35, w: pw - 0.8, h: 0, line: { color: P.line, width: 1 } });
-  s.addShape(S.rect, { x: lx + pw / 2 - 0.35, y: py + 0.7, w: 0.7, h: ph - 1.05, fill: { color: P.amber }, line: { type: "none" } });
-  s.addShape(S.roundRect, { x: lx + pw / 2 + 0.15, y: py + 0.66, w: 2.0, h: 0.44, rectRadius: 0.22, fill: { color: "C0392B" }, line: { type: "none" } });
-  s.addText("429 Too Many Requests", { x: lx + pw / 2 + 0.15, y: py + 0.66, w: 2.0, h: 0.44, fontFace: JP, fontSize: 10, bold: true, color: P.white, align: "center", valign: "middle", margin: 0 });
-  // 右パネル: 時間差登録（推奨）
-  s.addShape(S.roundRect, { x: rx, y: py, w: pw, h: ph, rectRadius: 0.08, fill: { color: P.softer }, line: { color: P.teal, width: 1.25 } });
-  s.addShape(S.rect, { x: rx, y: py, w: pw, h: 0.42, fill: { color: P.primary }, line: { type: "none" } });
-  s.addText("時間差登録（推奨）", { x: rx, y: py, w: pw, h: 0.42, fontFace: JP, fontSize: 12.5, bold: true, color: P.white, align: "center", valign: "middle", margin: 0 });
-  s.addShape(S.line, { x: rx + 0.4, y: py + ph - 0.35, w: pw - 0.8, h: 0, line: { color: P.line, width: 1 } });
-  const heights = [0.7, 0.55, 0.8, 0.6, 0.75];
-  heights.forEach((hh, i) => {
-    const bxw = 0.52, bstep = (pw - 0.9) / heights.length;
-    const bx = rx + 0.5 + i * bstep;
-    s.addShape(S.rect, { x: bx, y: py + ph - 0.35 - hh, w: bxw, h: hh, fill: { color: P.teal }, line: { type: "none" } });
-  });
-  s.addText("バッチを分散", { x: rx + 0.4, y: py + 0.5, w: pw - 0.8, h: 0.24, fontFace: JP, fontSize: 10, color: P.muted, align: "right", margin: 0 });
-  bullets(s, [
-    "登録スケジュールを工場・拠点・出荷ロット単位でずらす",
-    "バッチサイズは DPS の登録制限と、期間内に登録する総台数から決める",
-    "429 は Retry-After を優先し、指数バックオフとジッターで再試行を分散する[1]",
-  ], 4.5, { size: 12, gap: 6, h: 1.35 });
-  callout(s, "再試行は成功率を上げるが、全デバイスが同じ間隔で再試行すると負荷をさらに集中させる。", 5.95);
-  sources(s, ["https://learn.microsoft.com/ja-jp/azure/iot-dps/concepts-deploy-at-scale"]);
-  footer(s, 8);
-}
-
-// ---- 07-07 再接続と再プロビジョニングを使い分ける ----------------------
+// ---- 07-09 再接続と再プロビジョニングを使い分ける ----------------------
 function s07() {
-  const s = pptx.addSlide(); header(s, "08", "再接続と再プロビジョニング", "再接続と再プロビジョニングを使い分ける");
+  const s = pptx.addSlide(); header(s, "09", "再接続と再プロビジョニング", "再接続と再プロビジョニングを使い分ける");
   lead(s, "再起動や一時切断のたびに DPS へ戻らず、保存した割り当て情報で同じ IoT Hub への再接続を先に試す。");
   // メイン経路（強調）
   const my = 2.35, mh = 0.7;
@@ -416,12 +442,12 @@ function s07() {
   ], 4.45, { colW: [2.7, 4.2, 5.19], rowH: 0.52, size: 11.5 });
   callout(s, "429 は Retry-After、5xx はバックオフを使い、短時間の失敗だけで全台を DPS へ戻さない[1]。", 5.9);
   sources(s, ["https://learn.microsoft.com/ja-jp/azure/iot-dps/concepts-deploy-at-scale"]);
-  footer(s, 9);
+  footer(s, 10);
 }
 
-// ---- 07-08 信頼性・容量・監視をエンドツーエンドで設計する --------------
+// ---- 07-10 信頼性・容量・監視をエンドツーエンドで設計する --------------
 function s08() {
-  const s = pptx.addSlide(); header(s, "09", "信頼性・容量・監視", "信頼性・容量・監視をエンドツーエンドで設計する");
+  const s = pptx.addSlide(); header(s, "10", "信頼性・容量・監視", "信頼性・容量・監視をエンドツーエンドで設計する");
   lead(s, "IoT Hub の稼働だけでなく、必要なデータが必要な時間内に業務処理まで届くかを監視する。");
   tableAt(s, ["観点", "本番前に決めること"], [
     ["切断・再送", "バックオフとジッター、デバイス側バッファ、重複判定、順序の扱い"],
@@ -439,12 +465,12 @@ function s08() {
     "https://learn.microsoft.com/ja-jp/azure/iot-hub/monitor-iot-hub",
     "https://learn.microsoft.com/ja-jp/azure/iot-dps/concepts-deploy-at-scale",
   ]);
-  footer(s, 10);
+  footer(s, 11);
 }
 
-// ---- 07-09 ケーススタディから責任分界を読み解く ------------------------
+// ---- 07-11 ケーススタディから責任分界を読み解く ------------------------
 function s09() {
-  const s = pptx.addSlide(); header(s, "10", "ケーススタディ", "ケーススタディから責任分界を読み解く");
+  const s = pptx.addSlide(); header(s, "11", "ケーススタディ", "ケーススタディから責任分界を読み解く");
   lead(s, "事例の構成をそのまま採用せず、自分の要件に照らして設計判断を読み解く。");
 
   const ext = P.green;
@@ -502,12 +528,12 @@ function s09() {
   });
   callout(s, "図だけでは、認証・ネットワーク・冗長化・再試行・重複対策・監視の実装状況は判断できない。事例構成であり共通の必須構成ではない。", 5.82, CW, MX, P.cyan);
   noteSource(s, "参考: 社内事例「IoT Readiness Refresher 2025 - Day 01」スライド11 を基に簡略化して作図（固有名詞は匿名化）", 6.6);
-  footer(s, 11);
+  footer(s, 12);
 }
 
-// ---- 07-10 本番移行判定チェックリスト ----------------------------------
+// ---- 07-12 本番移行判定チェックリスト ----------------------------------
 function s10() {
-  const s = pptx.addSlide(); header(s, "11", "本番移行判定", "本番移行判定チェックリスト");
+  const s = pptx.addSlide(); header(s, "12", "本番移行判定", "本番移行判定チェックリスト");
   lead(s, "必須項目が未定義なら、機能デモが成功していても本番移行のリスクは高い。");
   const rows = [
     ["必須", "脅威モデルとデータ分類をレビューした"],
@@ -533,10 +559,10 @@ function s10() {
   });
   s.addTable(body, { x: MX, y: 2.0, w: CW, colW: [1.5, CW - 1.5], rowH: 0.44, border: { pt: 0.75, color: P.line }, margin: [3, 6, 3, 6], valign: "middle", autoPage: false });
   callout(s, "確認: 目標値は測れるか。失敗時に誰が判断するか。実際の制約下で復旧まで試したか。次章で全体像と使い分けを振り返る。", 6.05, CW, MX, P.cyan);
-  footer(s, 12);
+  footer(s, 13);
 }
 
 cover();
-s01(); s02(); s03(); s04(); s05(); sMethods(); s06(); s07(); s08(); s09(); s10();
+s01(); s02(); s03(); s04(); sNet(); sReli(); s05(); sMethods(); s07(); s08(); s09(); s10();
 
 pptx.writeFile({ fileName: "docs/sections/07-non-functional-requirements/v1/v1-07-non-functional-requirements.pptx" }).then((f) => console.log("written:", f));
